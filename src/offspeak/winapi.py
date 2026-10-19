@@ -113,7 +113,7 @@ def _put(fmt: int, data: bytes) -> bool:
 def _mark_transient() -> None:
     """Keep this content out of the Win+V clipboard history and cloud clipboard."""
     for name in ("ExcludeClipboardContentFromMonitorProcessing", "CanIncludeInClipboardHistory",
-                 "CanUploadToCloud"):
+                 "CanUploadToCloudClipboard"):
         _put(user32.RegisterClipboardFormatW(name), (0).to_bytes(4, "little"))
 
 
