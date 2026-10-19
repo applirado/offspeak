@@ -4,15 +4,15 @@ import socket
 import numpy as np
 import pytest
 
-from localwhisper import netguard
-from localwhisper.audio import SAMPLE_RATE, resample, split_for_asr, trim_silence
-from localwhisper.config import Config, Mode
-from localwhisper.context import matches_app
-from localwhisper.engines import build_messages
-from localwhisper.history import History
-from localwhisper.hotkeys import Hotkey, parse_shortcut
-from localwhisper.importer import import_superwhisper
-from localwhisper.textproc import apply_replacements, clean_llm_output, clean_transcript, correct_vocabulary
+from offspeak import netguard
+from offspeak.audio import SAMPLE_RATE, resample, split_for_asr, trim_silence
+from offspeak.config import Config, Mode
+from offspeak.context import matches_app
+from offspeak.engines import build_messages
+from offspeak.history import History
+from offspeak.hotkeys import Hotkey, parse_shortcut
+from offspeak.importer import import_superwhisper
+from offspeak.textproc import apply_replacements, clean_llm_output, clean_transcript, correct_vocabulary
 
 
 @pytest.mark.parametrize("text,expected", [
@@ -129,7 +129,7 @@ def test_history_add_and_search(tmp_path):
 
 def test_import_superwhisper(tmp_path, monkeypatch):
     sw = tmp_path / "sw"
-    monkeypatch.setattr("localwhisper.config.SUPERWHISPER_DIR", sw)
+    monkeypatch.setattr("offspeak.config.SUPERWHISPER_DIR", sw)
     (sw / "modes").mkdir(parents=True)
     (sw / "settings").mkdir()
     (sw / "models").mkdir()

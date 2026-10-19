@@ -1,7 +1,7 @@
 [project]
-name = "localwhisper"
+name = "offspeak"
 version = "0.1.0"
-description = "Offline voice dictation for Windows: whisper.cpp speech-to-text plus optional llama.cpp clean-up, no cloud."
+description = "Offline voice dictation for Windows: local speech-to-text (Parakeet or whisper.cpp) with optional llama.cpp clean-up, no cloud."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "llama-cpp-python>=0.3.16",
@@ -17,10 +17,10 @@ dependencies = [
 ]
 
 [project.scripts]
-localwhisper = "localwhisper.cli:main"
+offspeak = "offspeak.cli:main"
 
 [project.gui-scripts]
-localwhisperw = "localwhisper.cli:main"
+offspeakw = "offspeak.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -30,7 +30,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/localwhisper"]
+packages = ["src/offspeak"]
 
 [tool.uv]
 no-build-package = ["llama-cpp-python"]

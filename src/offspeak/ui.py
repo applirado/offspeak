@@ -5,7 +5,7 @@ import tkinter as tk
 
 from PIL import Image, ImageDraw
 
-from localwhisper import winapi
+from offspeak import winapi
 
 STATE_COLORS = {"ready": "#8a8f98", "recording": "#e5484d", "processing": "#f5a524", "done": "#30a46c",
                 "error": "#e5484d"}
