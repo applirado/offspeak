@@ -4,15 +4,15 @@ import queue
 import signal
 import threading
 import time
-import winsound
 from concurrent.futures import ThreadPoolExecutor
 
 import pystray
 
 from offspeak import context as ctx
-from offspeak import netguard, winapi
-from offspeak.audio import Recorder, load_audio_file
+from offspeak import netguard, sounds, winapi
+from offspeak.audio import SAMPLE_RATE, Recorder, load_audio_file, normalize, trim_silence
 from offspeak.config import Config, Mode
+from offspeak.settings_ui import SettingsWindow
 from offspeak.history import History
 from offspeak.hotkeys import Binding, HotkeyManager, parse_shortcut
 from offspeak.pipeline import Pipeline
@@ -21,9 +21,9 @@ from offspeak.ui import Overlay, tray_image
 log = logging.getLogger("offspeak")
 
 
-def beep(enabled: bool, freq: int) -> None:
-    if enabled:
-        threading.Thread(target=winsound.Beep, args=(freq, 70), daemon=True).start()
+def play_sound(settings, event: str) -> None:
+    if settings.sound_effects:
+        sounds.play(settings.sound_theme, event, settings.sound_volume)
 
 
 class App:
@@ -44,6 +44,7 @@ class App:
         self.overlay = Overlay(lambda: self.recorder.level)
         self.tray = pystray.Icon("Offspeak", tray_image("ready"), "Offspeak", self._menu())
         self.last_result = ""
+        self.settings_window: SettingsWindow | None = None
 
     # -- lifecycle -----------------------------------------------------------
     def run(self) -> None:
@@ -110,7 +111,7 @@ class App:
                 self._stop()
         elif action == "cancel" and self.state == "recording":
             self.recorder.stop()
-            beep(self.config.settings.sound_effects, 440)
+            play_sound(self.config.settings, "cancel")
             self._set_state("ready", "Cancelled", hide_after_ms=800)
 
     def _start(self, mode_key: str | None, ptt: bool) -> None:
@@ -123,15 +124,25 @@ class App:
                         self.config.active_mode)
         self.mode, self.ptt = mode, ptt
         self.recorder.start()
-        beep(self.config.settings.sound_effects, 880)
+        play_sound(self.config.settings, "start")
         self._set_state("recording", mode.name)
         self.context_future = self.ctx_worker.submit(ctx.gather, mode, self.app_info)
 
     def _stop(self) -> None:
         audio = self.recorder.stop()
-        beep(self.config.settings.sound_effects, 660)
+        play_sound(self.config.settings, "stop")
+        if self.app_info.get("pid") == os.getpid():
+            # Dictating into Offspeak's own settings window: feed the raw text to its test area, don't paste.
+            self._set_state("processing", "Transcribing for test")
+            self._transcribe_for_test(audio, self._heard_in_settings)
+            return
         self._set_state("processing", f"Transcribing ({self.mode.name})")
         self.worker.submit(self._process, audio, self.mode, self.context_future)
+
+    def _heard_in_settings(self, text: str | None, error: str | None) -> None:
+        if self.settings_window and self.settings_window.exists():
+            self.settings_window.heard(text, error)
+        self._set_state("ready", "Sent to test area", hide_after_ms=800)
 
     def _process(self, audio, mode: Mode, context_future) -> None:
         try:
@@ -152,17 +163,19 @@ class App:
     def _deliver(self, text: str, mode: Mode) -> None:
         s = self.config.settings
         auto_paste = s.auto_paste if mode.auto_paste is None else mode.auto_paste
-        previous = winapi.get_clipboard_text()
-        winapi.set_clipboard_text(text)
         if not auto_paste:
+            winapi.set_clipboard_text(text)  # the user pastes it themselves
             return
+        previous = winapi.snapshot_clipboard()
+        ours = winapi.set_clipboard_text(text, transient=True)
         time.sleep(0.05)
         winapi.send_ctrl_v()
-        if previous is not None and s.restore_clipboard_delay > 0:
+        if previous is not None and ours is not None and s.restore_clipboard_delay > 0:
             def restore():
                 time.sleep(s.restore_clipboard_delay)
-                if winapi.get_clipboard_text() == text:
-                    winapi.set_clipboard_text(previous)
+                # only if nobody copied something new in the meantime
+                if winapi.clipboard_sequence() == ours:
+                    winapi.restore_clipboard(previous)
             threading.Thread(target=restore, daemon=True).start()
 
     def _set_state(self, state: str, label: str, hide_after_ms: int | None = None) -> None:
@@ -187,6 +200,7 @@ class App:
                 mode_item(m.key, m.name) for m in self.config.modes.values()))),
             pystray.MenuItem("Copy last result", self._copy_last, enabled=lambda _i: bool(self.last_result)),
             pystray.MenuItem("Transcribe file...", self._transcribe_file_dialog),
+            pystray.MenuItem("Settings...", lambda: self.overlay.call(self._open_settings), default=True),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Open data folder", lambda: os.startfile(self.config.root)),
             pystray.MenuItem("Reload settings", self._reload),
@@ -207,6 +221,44 @@ class App:
         self.tray.menu = self._menu()
         self.tray.update_menu()
         self.worker.submit(self._preload, self.config.active_mode)
+
+    def _open_settings(self) -> None:
+        if self.settings_window and self.settings_window.exists():
+            return self.settings_window.show()
+        self.settings_window = SettingsWindow(
+            self.overlay.root, self.config.settings, self.config.modes, self.config.active_mode.language,
+            on_save=self._save_settings, transcribe=self._transcribe_for_test,
+            pause_hotkeys=lambda paused: setattr(self.hotkeys, "paused", paused),
+            on_zoom=self._save_zoom)
+
+    def _save_zoom(self, zoom: float) -> None:
+        self.config.settings.ui_zoom = zoom
+        self.config.save_settings()
+
+    def _transcribe_for_test(self, audio, done) -> None:
+        """Raw speech-to-text for the settings test area, on the same worker as normal dictation."""
+        mode = self.config.active_mode
+
+        def job():
+            try:
+                speech = trim_silence(audio)
+                text = self.pipeline.transcribe(normalize(speech), mode) if speech.size >= SAMPLE_RATE // 4 else ""
+                self.overlay.call(done, text, None)
+            except Exception as e:
+                log.exception("test transcription failed")
+                self.overlay.call(done, None, str(e))
+
+        self.worker.submit(job)
+
+    def _save_settings(self, changes: dict) -> None:
+        for key, shortcut in changes.pop("mode_shortcuts", {}).items():
+            if key in self.config.modes and self.config.modes[key].shortcut != shortcut:
+                self.config.modes[key].shortcut = shortcut
+                self.config.save_mode(self.config.modes[key])
+        for key, value in changes.items():
+            setattr(self.config.settings, key, value)
+        self.config.save_settings()
+        self._bind_hotkeys()
 
     def _transcribe_file_dialog(self) -> None:
         self.overlay.call(self._ask_file)

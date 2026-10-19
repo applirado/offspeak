@@ -1,6 +1,8 @@
 import difflib
 import re
 
+from offspeak.commands import apply_voice_commands
+
 THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 TRANSCRIPT_TAG_RE = re.compile(r"</?transcript>", re.IGNORECASE)
 NON_SPEECH_RE = re.compile(r"\[(BLANK_AUDIO|MUSIC|NOISE|SILENCE|INAUDIBLE)[^\]]*\]|\((music|silence|noise)\)", re.IGNORECASE)
@@ -66,6 +68,11 @@ def correct_vocabulary(text: str, vocabulary: list[str], threshold: float = 0.75
         if term is not None:
             text = text[:start] + term + text[end:]
     return text
+
+
+def postprocess(text: str, vocabulary: list[str], replacements: list[dict], commands: list[dict]) -> str:
+    """Rule-based clean-up of a raw transcript, in the order the app applies it."""
+    return apply_replacements(correct_vocabulary(apply_voice_commands(text, commands), vocabulary), replacements)
 
 
 def similarity(a: str, b: str) -> float:

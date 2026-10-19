@@ -53,13 +53,19 @@ class Settings:
     cancel_shortcut: str = "Escape"
     auto_paste: bool = True
     restore_clipboard_delay: float = 1.0
-    sound_effects: bool = True
+    sound_effects: bool = False
+    sound_theme: str = "soft"
+    sound_volume: float = 0.5
+    ui_zoom: float = 1.0
     keep_recordings_days: int = 30
     min_recording_ms: int = 400
     threads: int = 0
     llm_context_size: int = 4096
     replacements: list[dict] = field(default_factory=list)
     vocabulary: list[str] = field(default_factory=list)
+    voice_commands_enabled: bool = True
+    # language -> command id -> spoken phrases; only phrasings that differ from the defaults
+    voice_commands: dict[str, dict[str, list[str]]] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Settings":

@@ -4,9 +4,10 @@ import numpy as np
 
 from offspeak import models
 from offspeak.audio import SAMPLE_RATE, normalize, trim_silence
+from offspeak.commands import commands_for
 from offspeak.config import Mode, Settings
 from offspeak.engines import LlamaEngine, ParakeetEngine, WhisperEngine
-from offspeak.textproc import apply_replacements, correct_vocabulary, similarity, word_count
+from offspeak.textproc import apply_replacements, postprocess, similarity, word_count
 
 MIN_PROOFREAD_SIMILARITY = 0.6
 
@@ -52,7 +53,8 @@ class Pipeline:
         stt_ms = int((time.perf_counter() - t0) * 1000)
         if not raw:
             return None
-        raw = apply_replacements(correct_vocabulary(raw, s.vocabulary), s.replacements)
+        commands = commands_for(mode.language, s.voice_commands) if s.voice_commands_enabled else []
+        raw = postprocess(raw, s.vocabulary, s.replacements, commands)
         result, llm_ms, llm_rejected = raw, 0, False
         if (llm := self.llm_path(mode)) is not None:
             t1 = time.perf_counter()

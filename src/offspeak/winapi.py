@@ -19,6 +19,12 @@ user32.GetClipboardData.restype = wintypes.HANDLE
 user32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
 user32.SetClipboardData.restype = wintypes.HANDLE
 user32.GetClipboardSequenceNumber.restype = wintypes.DWORD
+user32.EnumClipboardFormats.argtypes = [wintypes.UINT]
+user32.EnumClipboardFormats.restype = wintypes.UINT
+user32.RegisterClipboardFormatW.argtypes = [wintypes.LPCWSTR]
+user32.RegisterClipboardFormatW.restype = wintypes.UINT
+kernel32.GlobalSize.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalSize.restype = ctypes.c_size_t
 user32.GetForegroundWindow.restype = wintypes.HWND
 user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
 user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
@@ -84,23 +90,92 @@ def get_clipboard_text() -> str | None:
         user32.CloseClipboard()
 
 
-def set_clipboard_text(text: str) -> bool:
-    data = ctypes.create_unicode_buffer(text)
-    size = ctypes.sizeof(data)
-    handle = kernel32.GlobalAlloc(GMEM_MOVEABLE, size)
+def _global_from_bytes(data: bytes):
+    handle = kernel32.GlobalAlloc(GMEM_MOVEABLE, max(1, len(data)))
     if not handle:
-        return False
+        return None
     ptr = kernel32.GlobalLock(handle)
-    ctypes.memmove(ptr, data, size)
+    ctypes.memmove(ptr, data, len(data))
     kernel32.GlobalUnlock(handle)
-    if not _open_clipboard():
+    return handle
+
+
+def _put(fmt: int, data: bytes) -> bool:
+    """SetClipboardData with a fresh global copy; the clipboard must be open."""
+    handle = _global_from_bytes(data)
+    if handle and user32.SetClipboardData(fmt, handle):
+        return True
+    if handle:
         kernel32.GlobalFree(handle)
+    return False
+
+
+def _mark_transient() -> None:
+    """Keep this content out of the Win+V clipboard history and cloud clipboard."""
+    for name in ("ExcludeClipboardContentFromMonitorProcessing", "CanIncludeInClipboardHistory",
+                 "CanUploadToCloud"):
+        _put(user32.RegisterClipboardFormatW(name), (0).to_bytes(4, "little"))
+
+
+def clipboard_sequence() -> int:
+    return user32.GetClipboardSequenceNumber()
+
+
+def set_clipboard_text(text: str, transient: bool = False) -> int | None:
+    """Replace the clipboard with text; returns the clipboard sequence number afterwards, or None."""
+    if not _open_clipboard():
+        return None
+    try:
+        user32.EmptyClipboard()
+        if not _put(CF_UNICODETEXT, (text + "\0").encode("utf-16-le")):
+            return None
+        if transient:
+            _mark_transient()
+    finally:
+        user32.CloseClipboard()
+    return clipboard_sequence()
+
+
+# Formats whose handles are GDI objects or owned by the source app; Windows re-synthesises CF_BITMAP from CF_DIB.
+_UNCOPYABLE = {2, 3, 9, 14, 0x80, 0x82, 0x83, 0x8E, *range(0x200, 0x400)}
+SNAPSHOT_LIMIT = 256 << 20
+
+
+def snapshot_clipboard() -> list[tuple[int, bytes]] | None:
+    """Copy every memory-based clipboard format (text, images, HTML, RTF, files, ...), or None if unavailable."""
+    if not _open_clipboard():
+        return None
+    formats, total, fmt = [], 0, 0
+    try:
+        while fmt := user32.EnumClipboardFormats(fmt):
+            if fmt in _UNCOPYABLE:
+                continue
+            handle = user32.GetClipboardData(fmt)
+            size = kernel32.GlobalSize(handle) if handle else 0
+            ptr = kernel32.GlobalLock(handle) if size else None
+            if not ptr:
+                continue
+            try:
+                formats.append((fmt, ctypes.string_at(ptr, size)))
+            finally:
+                kernel32.GlobalUnlock(handle)
+            total += size
+            if total > SNAPSHOT_LIMIT:
+                return None
+        return formats
+    finally:
+        user32.CloseClipboard()
+
+
+def restore_clipboard(snapshot: list[tuple[int, bytes]]) -> bool:
+    if not _open_clipboard():
         return False
     try:
         user32.EmptyClipboard()
-        if not user32.SetClipboardData(CF_UNICODETEXT, handle):
-            kernel32.GlobalFree(handle)
-            return False
+        for fmt, data in snapshot:
+            _put(fmt, data)
+        if snapshot:
+            _mark_transient()  # the original copy is already in the history
         return True
     finally:
         user32.CloseClipboard()
@@ -133,7 +208,7 @@ def foreground_app() -> dict:
                 exe = buf.value
         finally:
             kernel32.CloseHandle(proc)
-    return {"name": Path(exe).stem if exe else "", "path": exe, "title": title.value}
+    return {"name": Path(exe).stem if exe else "", "path": exe, "title": title.value, "pid": pid.value}
 
 
 def make_no_activate(hwnd: int) -> None:
@@ -143,6 +218,30 @@ def make_no_activate(hwnd: int) -> None:
     put = user32.SetWindowLongPtrW
     put.argtypes, put.restype = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t], ctypes.c_ssize_t
     put(hwnd, GWL_EXSTYLE, get(hwnd, GWL_EXSTYLE) | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST)
+
+
+def remove_caption(hwnd: int) -> None:
+    """Hide the native title bar but keep the resizable frame, shadow and taskbar button (Win 11: round corners)."""
+    GWL_STYLE, WS_CAPTION = -16, 0x00C00000
+    SWP_FLAGS = 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020  # NOSIZE NOMOVE NOZORDER NOACTIVATE FRAMECHANGED
+    get = user32.GetWindowLongPtrW
+    get.argtypes, get.restype = [wintypes.HWND, ctypes.c_int], ctypes.c_ssize_t
+    put = user32.SetWindowLongPtrW
+    put.argtypes, put.restype = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t], ctypes.c_ssize_t
+    put(hwnd, GWL_STYLE, get(hwnd, GWL_STYLE) & ~WS_CAPTION)
+    user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                                    ctypes.c_int, wintypes.UINT]
+    user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, SWP_FLAGS)
+    # the client area moved up by the caption height; repaint it instead of showing shifted pixels
+    RDW_INVALIDATE, RDW_ERASE, RDW_FRAME, RDW_ALLCHILDREN, RDW_UPDATENOW = 0x1, 0x4, 0x400, 0x80, 0x100
+    user32.RedrawWindow.argtypes = [wintypes.HWND, ctypes.c_void_p, ctypes.c_void_p, wintypes.UINT]
+    user32.RedrawWindow(hwnd, None, None, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW)
+    try:
+        DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND = 33, 2
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
+                                                   ctypes.byref(ctypes.c_int(DWMWCP_ROUND)), 4)
+    except OSError:
+        pass  # Windows 10 has square corners
 
 
 _instance_mutex = None

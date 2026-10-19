@@ -10,7 +10,7 @@ from offspeak.config import Config, Mode
 from offspeak.context import matches_app
 from offspeak.engines import build_messages
 from offspeak.history import History
-from offspeak.hotkeys import Hotkey, parse_shortcut
+from offspeak.hotkeys import Hotkey, format_shortcut, parse_shortcut
 from offspeak.importer import import_superwhisper
 from offspeak.textproc import apply_replacements, clean_llm_output, clean_transcript, correct_vocabulary
 
@@ -25,6 +25,17 @@ from offspeak.textproc import apply_replacements, clean_llm_output, clean_transc
 ])
 def test_parse_shortcut(text, expected):
     assert parse_shortcut(text) == expected
+
+
+@pytest.mark.parametrize("text", ["Control+Space", "Control+Numpad0", "Control+Shift+KeyM", "Escape",
+                                  "Alt+F9", "Control+Digit3", "Shift+Win+ArrowUp", "Pause"])
+def test_format_shortcut_round_trips(text):
+    hk = parse_shortcut(text)
+    assert format_shortcut(hk.mods, hk.vk) == text
+
+
+def test_format_shortcut_unknown_key():
+    assert format_shortcut(frozenset({"ctrl"}), 0xFF) is None
 
 
 def test_parse_shortcut_empty_and_invalid():

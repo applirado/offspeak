@@ -25,10 +25,43 @@ NAMED_KEYS = {
 }
 
 
+VK_NAMES = {
+    0x20: "Space", 0x1B: "Escape", 0x0D: "Enter", 0x09: "Tab", 0x08: "Backspace", 0x2D: "Insert",
+    0x2E: "Delete", 0x24: "Home", 0x23: "End", 0x21: "PageUp", 0x22: "PageDown", 0x13: "Pause",
+    0x91: "ScrollLock", 0x14: "CapsLock", 0xC0: "Backquote", 0x25: "ArrowLeft", 0x26: "ArrowUp",
+    0x27: "ArrowRight", 0x28: "ArrowDown", 0x6A: "NumpadMultiply", 0x6B: "NumpadAdd",
+    0x6D: "NumpadSubtract", 0x6E: "NumpadDecimal", 0x6F: "NumpadDivide",
+}
+MODIFIER_VKS = {vk for _, vks in MODIFIERS.values() for vk in vks}
+MODIFIER_LABELS = (("ctrl", "Control"), ("shift", "Shift"), ("alt", "Alt"), ("win", "Win"))
+
+
 @dataclass(frozen=True)
 class Hotkey:
     mods: frozenset[str]
     vk: int
+
+
+def key_name(vk: int) -> str | None:
+    if vk in VK_NAMES:
+        return VK_NAMES[vk]
+    if 0x60 <= vk <= 0x69:
+        return f"Numpad{vk - 0x60}"
+    if 0x30 <= vk <= 0x39:
+        return f"Digit{vk - 0x30}"
+    if 0x41 <= vk <= 0x5A:
+        return f"Key{chr(vk)}"
+    if 0x70 <= vk <= 0x87:
+        return f"F{vk - 0x6F}"
+    return None
+
+
+def format_shortcut(mods: frozenset[str], vk: int) -> str | None:
+    """Inverse of parse_shortcut, e.g. ({"ctrl", "shift"}, 0x4D) -> "Control+Shift+KeyM"."""
+    name = key_name(vk)
+    if name is None:
+        return None
+    return "+".join([label for mod, label in MODIFIER_LABELS if mod in mods] + [name])
 
 
 def parse_shortcut(text: str) -> Hotkey | None:
@@ -76,6 +109,7 @@ class HotkeyManager:
         self.bindings: list[Binding] = []
         self._held: dict[int, Binding] = {}
         self._listener = None
+        self.paused = False  # set while the user is typing a new shortcut
 
     def set_bindings(self, bindings: list[Binding]) -> None:
         self.bindings = bindings
@@ -95,6 +129,8 @@ class HotkeyManager:
             return False
         vk = data.vkCode
         if msg in (WM_KEYDOWN, WM_SYSKEYDOWN):
+            if self.paused:
+                return False
             if vk in self._held:
                 self._listener.suppress_event()
             mods = current_modifiers()
