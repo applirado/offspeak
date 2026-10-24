@@ -85,9 +85,8 @@ def build_messages(transcript: str, prompt: str, context: dict, vocabulary: list
     parts = []
     if vocabulary:
         parts.append(f"<vocabulary>{', '.join(vocabulary)}</vocabulary>")
-    for key, tag in (("clipboard", "clipboard"), ("selection", "selected_text")):
-        if value := (context.get(key) or "").strip():
-            parts.append(f"<{tag}>\n{value[:CONTEXT_LIMIT]}\n</{tag}>")
+    if selection := (context.get("selection") or "").strip():
+        parts.append(f"<selected_text>\n{selection[:CONTEXT_LIMIT]}\n</selected_text>")
     if app := context.get("application"):
         parts.append(f"<active_application>{app.get('name', '')} - {app.get('title', '')}</active_application>")
     if parts:

@@ -32,7 +32,6 @@ class Mode:
     translate_to_english: bool = False
     language_model: str = ""
     prompt: str = ""
-    context_from_clipboard: bool = False
     context_from_selection: bool = True
     context_from_active_app: bool = True
     activation_apps: list[str] = field(default_factory=list)

@@ -25,7 +25,8 @@ Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
 - **Voice commands.** Say "comma", "new line" or "quote" (in German "Komma", "neue Zeile",
   "Anführungszeichen") to insert punctuation and line breaks. Offspeak tells the command "period"
   apart from the noun in "a long period".
-- **Leaves your clipboard alone.** Images, rich text and files on the clipboard survive a dictation,
+- **Leaves your clipboard alone.** Offspeak uses the clipboard only to paste, then puts back what you
+  had copied: images, rich text and files included. It never reads the clipboard for anything else,
   and dictated text stays out of the Win+V clipboard history.
 - **Optional AI clean-up.** A mode can pass the text through a local language model (any GGUF file
   via llama.cpp) to rewrite, format or translate it.
@@ -152,11 +153,10 @@ shortcut. Modes are JSON files in `%LOCALAPPDATA%\Offspeak\modes\`:
   "key": "mail",
   "name": "E-Mail",
   "voice_model": "parakeet-tdt-0.6b-v3",
-  "language": "de",
+  "language": "en",
   "language_model": "Qwen3-4B-Instruct-Q4_K_M",
   "prompt": "Turn the dictation into a short, friendly e-mail.",
   "context_from_selection": true,
-  "context_from_clipboard": false,
   "activation_apps": ["outlook"],
   "shortcut": "Control+Numpad2"
 }
@@ -165,8 +165,9 @@ shortcut. Modes are JSON files in `%LOCALAPPDATA%\Offspeak\modes\`:
 - `language_model` is the file name of a `.gguf` file in the models folder, without the extension.
   Leave it empty for plain dictation, which is the fastest and most faithful option.
 - `activation_apps` switches to the mode automatically when one of these programs is in front.
-- The selected text and clipboard can be passed to the language model as context, so you can say
-  things like "make this more formal".
+- The selected text can be passed to the language model as context, so you can select a paragraph
+  and say things like "make this more formal". It is read only in modes with a language model and
+  never stored.
 
 After editing a mode, choose **Reload settings** in the tray menu.
 

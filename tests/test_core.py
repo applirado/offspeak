@@ -82,11 +82,10 @@ def test_build_messages_includes_context_only_when_present():
     assert "<" not in plain[0]["content"]
     assert plain[1]["content"] == "<transcript>\nhello\n</transcript>"
     rich = build_messages("hello", "Custom.", {"application": {"name": "Code", "title": "x.py"},
-                                               "selection": "sel", "clipboard": ""}, ["Kubernetes"])
+                                               "selection": "sel"}, ["Kubernetes"])
     sys_prompt = rich[0]["content"]
     assert sys_prompt.startswith("Custom.")
     assert "<selected_text>\nsel\n</selected_text>" in sys_prompt
-    assert "<clipboard>" not in sys_prompt
     assert "Kubernetes" in sys_prompt
     assert sys_prompt.index("<selected_text>") < sys_prompt.index("<active_application>")
     # stable instructions form a shared prefix, so llama.cpp can reuse its prompt cache
@@ -151,16 +150,18 @@ def test_history_never_stores_the_context(tmp_path):
     assert json.loads(meta)["app_name"] == "Outlook"
 
 
-def test_context_reads_selection_and_clipboard_only_for_a_language_model(monkeypatch):
-    from offspeak import context
+def test_context_reads_the_selection_only_for_a_language_model_and_never_the_clipboard(monkeypatch):
+    from offspeak import context, winapi
 
     reads = []
     monkeypatch.setattr(context, "selected_text", lambda: reads.append("selection") or "sel")
+    monkeypatch.setattr(winapi, "get_clipboard_text", lambda: pytest.fail("the clipboard must not be read"))
     plain = Mode(key="d", name="D", context_from_selection=True)
     assert context.gather(plain, {"name": "Code", "title": "x.py"}) == {"application": {"name": "Code", "title": "x.py"}}
     assert reads == []
-    rewriting = Mode(key="m", name="M", language_model="qwen", context_from_selection=True)
-    assert context.gather(rewriting, {})["selection"] == "sel"
+    # modes saved by older versions may still carry "context_from_clipboard"; it is ignored
+    rewriting = Mode.from_dict({"key": "m", "name": "M", "language_model": "qwen", "context_from_clipboard": True})
+    assert context.gather(rewriting, {}) == {"selection": "sel"}
     assert reads == ["selection"]
 
 

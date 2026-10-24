@@ -40,7 +40,6 @@ def import_superwhisper(config: Config, source: Path = SUPERWHISPER_DIR) -> list
             translate_to_english=bool(sw.get("translateToEnglish")),
             language_model=llm,
             prompt=sw.get("prompt") or "",
-            context_from_clipboard=bool(sw.get("contextFromClipboard")),
             context_from_selection=bool(sw.get("contextFromSelection")),
             context_from_active_app=bool(sw.get("contextFromActiveApplication", True)),
             activation_apps=list(sw.get("activationApps") or []),

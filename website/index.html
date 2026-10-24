@@ -385,7 +385,7 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
         </article>
         <article class="feature">
           <h3>Leaves your clipboard alone</h3>
-          <p>Images, rich text and files you copied are still there after a dictation, and dictated text stays out of the Win+V clipboard history.</p>
+          <p>OffSpeak uses the clipboard only to paste, then puts back what you had copied, images and files included. It never reads it for anything else, and dictated text stays out of the Win+V clipboard history.</p>
         </article>
         <article class="feature">
           <h3>Modes for every kind of text</h3>
@@ -407,7 +407,7 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
           <li><h3>Microphone</h3><p>Audio is recorded only while you hold the shortcut, or between start and stop.</p></li>
           <li><h3>Speech recognition</h3><p>Parakeet or whisper.cpp runs locally on the CPU. The model file sits on your disk.</p></li>
           <li><h3>Clean-up</h3><p>Vocabulary, replacements and voice commands are plain rules. An optional language model runs locally through llama.cpp.</p></li>
-          <li><h3>Your document</h3><p>The text is pasted where your cursor is. History and settings stay in <code>%LOCALAPPDATA%\Offspeak</code>; recordings older than 30 days are deleted.</p></li>
+          <li><h3>Your document</h3><p>The text is pasted where your cursor is, and your clipboard is put back as it was. Transcripts and settings stay in <code>%LOCALAPPDATA%\Offspeak</code>; audio older than 30 days is deleted. Selected text and window titles are never stored.</p></li>
         </ol>
         <p class="blocked"><b>NetworkBlocked</b>: Offspeak is offline-only; blocked connection to ('203.0.113.7', 443)</p>
       </div>

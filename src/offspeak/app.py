@@ -166,11 +166,12 @@ class App:
         if not auto_paste:
             winapi.set_clipboard_text(text)  # the user pastes it themselves
             return
-        previous = winapi.snapshot_clipboard()
+        # keep a copy of what the user had copied only to put it back; nothing else reads the clipboard
+        previous = winapi.snapshot_clipboard() if s.restore_clipboard_delay > 0 else None
         ours = winapi.set_clipboard_text(text, transient=True)
         time.sleep(0.05)
         winapi.send_ctrl_v()
-        if previous is not None and ours is not None and s.restore_clipboard_delay > 0:
+        if previous is not None and ours is not None:
             def restore():
                 time.sleep(s.restore_clipboard_delay)
                 # only if nobody copied something new in the meantime
