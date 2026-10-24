@@ -50,36 +50,57 @@ def _likeness(a: str, b: str) -> float:
                difflib.SequenceMatcher(None, _squeeze(a), _squeeze(b)).ratio())
 
 
+def _compact(s: str) -> str:
+    return re.sub(r"[\s\-]", "", s)
+
+
+def _distinct_spelling(term: str) -> bool:
+    """Short terms are fixed only when their spelling cannot be an ordinary word ("YAML", "OAuth", "npm")."""
+    return not re.fullmatch(r"[A-ZÄÖÜ]?[a-zäöüß]+", term) or term.islower()
+
+
 def correct_vocabulary(text: str, vocabulary: list[str], threshold: float = 0.75) -> str:
     """Snap near-miss spellings ("Databurse", "Data verse") to vocabulary terms."""
     tokens = list(re.finditer(r"\w+", text))
     candidates: list[tuple[float, int, int, str | None]] = []
     for term in vocabulary:
         target = re.sub(r"\W", "", term.lower())
-        # short terms are too close to ordinary words ("Teams" vs "Team")
-        if len(target) < 6:
+        # short terms are too close to ordinary words ("Teams" vs "Team"): only fix their case ("Yaml" -> "YAML")
+        short = len(target) < 6
+        if short and not _distinct_spelling(term):
             continue
-        n = len(term.split())
+        n = len(re.findall(r"\w+", term))
         for size in (n, n + 1):
             for i in range(len(tokens) - size + 1):
                 window = tokens[i:i + size]
-                if any(not re.fullmatch(r"[ \-]*", text[a.end():b.start()]) for a, b in zip(window, window[1:])):
+                # words may be joined by spaces or hyphens, or by a dot inside a name ("llama.cpp")
+                if any(not re.fullmatch(r"[ \-]*|\.", text[a.end():b.start()]) for a, b in zip(window, window[1:])):
                     continue
                 candidate = "".join(t.group() for t in window).lower()
                 start, end = window[0].start(), window[-1].end()
+                found = text[start:end]
                 if candidate == target:
+                    # "npm" stays as "Npm" at the start of a sentence; only "NPM" and the like are fixed
+                    if short and term.islower() and found == term.capitalize():
+                        continue
                     score = 1.0
-                elif _same_start(candidate, target) and abs(len(candidate) - len(target)) <= max(2, len(target) // 5):
+                elif short or abs(len(candidate) - len(target)) > max(2, len(target) // 5):
+                    continue
+                elif _same_start(candidate, target):
                     score = _likeness(candidate, target)
                     if score < threshold:
                         continue
                 else:
-                    continue
+                    # a different first letter needs an otherwise near-identical word ("slang chain" -> "LangChain")
+                    score = difflib.SequenceMatcher(None, candidate, target).ratio()
+                    if score < 0.88:
+                        continue
                 # exact hits (also "Power-Platform" for "Power Platform") only reserve their span
-                keep = text[start:end] == term or (candidate == target and " " in term)
+                keep = found == term or (candidate == target and " " in term and _compact(found) == _compact(term))
                 candidates.append((score, start, end, None if keep else term))
     accepted: list[tuple[int, int, str | None]] = []
-    for score, start, end, term in sorted(candidates, key=lambda c: (-c[0], c[2] - c[1])):
+    # best match first; among equal ones the longer, so "Fast API" beats "API" and "Azure DevOps" beats "Azure"
+    for score, start, end, term in sorted(candidates, key=lambda c: (-c[0], c[1] - c[2])):
         if not any(s < end and start < e for s, e, _ in accepted):
             accepted.append((start, end, term))
     for start, end, term in sorted(accepted, reverse=True):

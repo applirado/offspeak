@@ -65,9 +65,19 @@ def test_replacements_whole_word_case_insensitive():
     ("lokal mit Olama", "lokal mit Ollama"),
     ("alle Alarme und eine Lama-Herde", "alle Alarme und eine Lama-Herde"),
     ("Ich habe unsere Anmeldung geprüft", "Ich habe unsere Anmeldung geprüft"),
+    ("Sign in with entra ID", "Sign in with Entra ID"),
+    ("before the GitHub actions run", "before the GitHub Actions run"),
+    ("Convert the Yaml config", "Convert the YAML config"),
+    ("Install it with NPM.", "Install it with npm."),
+    ("Npm is installed.", "Npm is installed."),
+    ("Run it with Lama.cpp", "Run it with llama.cpp"),
+    ("Use slang chain for that", "Use LangChain for that"),
+    ("Deploy the Fast API service", "Deploy the FastAPI service"),
+    ("Two teams and a team lead", "Two teams and a team lead"),
 ])
 def test_correct_vocabulary(text, expected):
-    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code", "Ollama"]
+    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code", "Ollama", "Entra ID",
+             "GitHub Actions", "YAML", "npm", "llama.cpp", "LangChain", "FastAPI", "API"]
     assert correct_vocabulary(text, vocab) == expected
 
 
