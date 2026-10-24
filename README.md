@@ -40,7 +40,8 @@ Everything else, including Python, is installed by the setup.
 
 ## Installation
 
-Clone or download the repository and double-click **`setup.cmd`**. It installs, for the current user
+Download the [latest release](https://github.com/applirado/offspeak/releases/latest) as a ZIP (or clone
+the repository), unpack it to a folder you keep and double-click **`setup.cmd`**. It installs, for the current user
 and without admin rights:
 
 1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
