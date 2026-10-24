@@ -109,6 +109,18 @@ At the bottom, **Test your rules** shows what your rules make of a sentence. Cli
 your push-to-talk shortcut, and Offspeak puts the raw transcript into the test field instead of
 pasting it. **Ctrl+Plus**, **Ctrl+Minus** and **Ctrl+mouse wheel** zoom the window.
 
+Each tab has a **How it works** link (or press **F1**) that explains it with examples.
+
+### Vocabulary or replacements?
+
+For names and technical terms, the **Vocabulary** is usually all you need. Enter only the correct
+spelling; Offspeak fixes whatever sounds similar, so "Ulama" and "Olama" become "Ollama" without listing
+those variants. This works for terms with 6 or more letters.
+
+Use **Replacements** for what the vocabulary cannot fix: short words ("Jason" -> "JSON"), words that
+come out very differently ("Kuber Netties" -> "Kubernetes") and text snippets ("mfg" -> "Mit
+freundlichen Grüssen"). Replacements run after the vocabulary, so they always win.
+
 ### Voice commands
 
 The commands are fixed; you choose how to say them. A few of the defaults:

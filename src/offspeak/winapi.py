@@ -247,6 +247,15 @@ def remove_caption(hwnd: int) -> None:
         pass  # Windows 10 has square corners
 
 
+def grow_window(hwnd: int, dy: int) -> None:
+    """Change only the outer height; Tk's own geometry is off by the frame of the removed caption."""
+    rect = wintypes.RECT()
+    user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect))
+    SWP_NOMOVE, SWP_NOZORDER, SWP_NOACTIVATE = 0x2, 0x4, 0x10
+    user32.SetWindowPos(hwnd, None, 0, 0, rect.right - rect.left, rect.bottom - rect.top + dy,
+                        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)
+
+
 _instance_mutex = None
 
 
