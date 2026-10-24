@@ -183,6 +183,15 @@ class App:
         self.state = "ready" if state in ("done", "error") else state
         self.tray.icon = tray_image(state)
         self.overlay.show(state, label, hide_after_ms)
+        if self.state == "ready" and state != "ready" and hide_after_ms:
+            # green "done" and red "error" are only a flash; back to the app icon unless a new dictation began
+            timer = threading.Timer(hide_after_ms / 1000, self._back_to_ready_icon)
+            timer.daemon = True
+            timer.start()
+
+    def _back_to_ready_icon(self) -> None:
+        if self.state == "ready":
+            self.tray.icon = tray_image("ready")
 
     def _notify(self, message: str) -> None:
         try:

@@ -121,6 +121,17 @@ def test_matches_app():
     assert not matches_app({}, apps)
 
 
+def test_tray_icon_tile_shows_the_state():
+    from offspeak.ui import STATE_COLORS, icon_image
+
+    for state in ("ready", "recording", "processing", "done"):
+        img = icon_image(state, 64)
+        assert img.size == (64, 64)
+        assert img.getpixel((0, 0))[3] == 0  # rounded corner stays transparent
+        rgb = tuple(int(STATE_COLORS[state][i:i + 2], 16) for i in (1, 3, 5))
+        assert all(abs(a - b) <= 2 for a, b in zip(img.getpixel((58, 6))[:3], rgb))  # plain tile, top right
+
+
 def test_audio_helpers():
     assert resample(np.ones(48000, np.float32), 48000).size == SAMPLE_RATE
     assert resample(np.ones(44100, np.float32), 44100).size == SAMPLE_RATE

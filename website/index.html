@@ -29,9 +29,9 @@
   --band-muted: #aeb4c8;
   --window: #ffffff;
   --window-bar: #f1f3f8;
-  --state-ready: #2f6fed;  /* the tray icon's circle: blue, red, orange, green */
+  --state-ready: #fdb404;  /* the tray icon's tile: yellow, red, blue, green */
   --state-rec: #e0362c;
-  --state-busy: #f08a00;
+  --state-busy: #2f6fed;
   --state-done: #1f9d55;
   --shadow: 0 1px 2px rgb(17 23 58 / .08), 0 18px 40px -18px rgb(17 23 58 / .45);
 
@@ -52,7 +52,7 @@
     --paper: #0d1126; --surface: #151a35; --ink: #eef0f8; --muted: #a3a9be; --line: #262c4b;
     --amber-soft: #3a2f10; --band: #070a1a; --band-ink: #eef0f8; --band-muted: #9aa1b8;
     --window: #171c38; --window-bar: #1e2445;
-    --state-ready: #6a9bff; --state-rec: #ff6b5f; --state-busy: #ffaa3b; --state-done: #43c47f;
+    --state-ready: #fdb404; --state-rec: #ff6b5f; --state-busy: #6a9bff; --state-done: #43c47f;
     --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 18px 40px -18px rgb(0 0 0 / .8);
     color-scheme: dark;
   }
@@ -61,7 +61,7 @@
   --paper: #0d1126; --surface: #151a35; --ink: #eef0f8; --muted: #a3a9be; --line: #262c4b;
   --amber-soft: #3a2f10; --band: #070a1a; --band-ink: #eef0f8; --band-muted: #9aa1b8;
   --window: #171c38; --window-bar: #1e2445;
-  --state-ready: #6a9bff; --state-rec: #ff6b5f; --state-busy: #ffaa3b; --state-done: #43c47f;
+  --state-ready: #fdb404; --state-rec: #ff6b5f; --state-busy: #6a9bff; --state-done: #43c47f;
   --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 18px 40px -18px rgb(0 0 0 / .8);
   color-scheme: dark;
 }
@@ -419,15 +419,15 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
       <div class="head">
         <p class="eyebrow">Install</p>
         <h2>Three steps, no admin rights.</h2>
-        <p>The setup installs everything OffSpeak needs, Python included, just for your user account.</p>
+        <p>The installer sets up everything OffSpeak needs, Python included, just for your user account. Remove it any time under Settings › Apps.</p>
       </div>
       <ol class="steps">
-        <li><h3>Get the code</h3><p>Download the <a href="https://github.com/applirado/offspeak/releases/latest">latest release</a> as a ZIP and unpack it to a folder you keep, or clone the repository.</p></li>
-        <li><h3>Run the setup</h3><p>Double-click <code>setup.cmd</code>. It installs uv, Python 3.12, the packages and the Parakeet voice model, adds a Start menu entry and starts with Windows.</p></li>
+        <li><h3>Download the installer</h3><p>Get <code>OffSpeak-Setup.exe</code> from the <a href="https://github.com/applirado/offspeak/releases/latest">latest release</a> on GitHub.</p></li>
+        <li><h3>Run it</h3><p>It downloads Python, the packages and the Parakeet voice model (about 1 GB). If Windows SmartScreen warns about an unknown publisher, click <em>More info</em>, then <em>Run anyway</em>.</p></li>
         <li><h3>Hold Ctrl+Space</h3><p>The cockatoo sits in the tray. Hold the shortcut, talk, let go. Change shortcuts, vocabulary and sounds with a left-click on it.</p></li>
       </ol>
       <div class="code">
-        <pre id="install-cmd"><span class="c"># in PowerShell or Terminal</span>
+        <pre id="install-cmd"><span class="c"># or from the source code, in PowerShell or Terminal</span>
 git clone https://github.com/applirado/offspeak.git
 cd offspeak
 .\setup.cmd</pre>

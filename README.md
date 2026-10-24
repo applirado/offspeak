@@ -40,9 +40,24 @@ Everything else, including Python, is installed by the setup.
 
 ## Installation
 
-Download the [latest release](https://github.com/applirado/offspeak/releases/latest) as a ZIP (or clone
-the repository), unpack it to a folder you keep and double-click **`setup.cmd`**. It installs, for the current user
-and without admin rights:
+Download **`OffSpeak-Setup-<version>.exe`** from the [latest release](https://github.com/applirado/offspeak/releases/latest)
+and run it. It installs Offspeak for your user account, without admin rights, into
+`%LOCALAPPDATA%\Programs\OffSpeak`, and downloads Python, the packages and the Parakeet voice model
+(about 1 GB). It adds a Start menu entry and, if you like, starts Offspeak when you sign in.
+
+The installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click
+**More info**, then **Run anyway**.
+
+To remove Offspeak, use **Settings > Apps**. The uninstaller asks whether to keep your settings, history
+and downloaded models.
+
+The setup is the only step that uses the internet. After that, Offspeak works offline.
+
+<details>
+<summary>Install from the source code with setup.cmd</summary>
+
+Clone the repository (or download it as a ZIP) and double-click **`setup.cmd`**. It installs, for the
+current user and without admin rights:
 
 1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
 2. Offspeak's packages, exactly as pinned in `uv.lock`
@@ -53,7 +68,7 @@ Then it starts Offspeak. Run `setup.cmd` again at any time to update or repair t
 example after a `git pull` or after moving the folder. Options: `-NoAutostart`, `-NoModel` and
 `-NoLaunch`, for example `setup.cmd -NoAutostart`.
 
-The setup is the only step that uses the internet. After that, Offspeak works offline.
+</details>
 
 <details>
 <summary>Manual installation with uv</summary>
@@ -77,13 +92,14 @@ uv run offspeak        # with a console window
 uv run offspeakw       # without a console window
 ```
 
-Offspeak sits in the system tray as a cockatoo. The colour of its circle shows what it is doing:
+Offspeak sits in the system tray as its cockatoo icon. The colour of the tile behind the bird shows
+what it is doing:
 
 | Colour | State |
 |---|---|
-| Blue | Ready |
+| Yellow | Ready |
 | Red | Recording |
-| Orange | Transcribing |
+| Blue | Transcribing |
 | Green | Done; the text was inserted |
 
 ### Default shortcuts

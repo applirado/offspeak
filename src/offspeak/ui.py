@@ -4,63 +4,35 @@ import threading
 import time
 import tkinter as tk
 
-from PIL import Image, ImageChops, ImageDraw
+from pathlib import Path
+
+from PIL import Image, ImageDraw
 
 from offspeak import winapi
 
-STATE_COLORS = {"ready": "#3e63dd", "recording": "#e5484d", "processing": "#f5a524", "done": "#30a46c",
+# ready is the amber of the app icon; transcribing is blue, because orange would barely differ from it
+STATE_COLORS = {"ready": "#fdb404", "recording": "#e5484d", "processing": "#3e63dd", "done": "#30a46c",
                 "error": "#e5484d"}
 TRANSPARENT = "#010203"
-ICON_CANVAS = 512  # drawn large, then downsampled for smooth edges
-
-
-def _curve(p0, p1, p2, steps: int = 24) -> list[tuple[float, float]]:
-    """Quadratic Bezier from p0 to p2 with control point p1."""
-    return [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0],
-             (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1])
-            for t in (i / steps for i in range(steps + 1))]
+BIRD_FILE = Path(__file__).with_name("icon-bird.png")  # the cockatoo of assets/offspeak.svg without its tile
 
 
 @functools.lru_cache(maxsize=32)
-def icon_image(state: str, size: int = 64, tight: bool = False) -> Image.Image:
-    """The Offspeak cockatoo on a circle whose colour shows the recording state.
-
-    tight=True crops to head, crest and beak and fills the whole circle, for the tiny tray icon.
-    """
-    s, white, beak = ICON_CANVAS, "#ffffff", "#1f2933"
-    bird = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(bird)
-    for base_a, tip, base_b in (((168, 175), (95, 40), (215, 140)), ((200, 150), (165, 18), (252, 128)),
-                                ((236, 136), (250, 22), (290, 130))):
-        d.polygon(_curve(base_a, (tip[0] - 10, tip[1] + 60), tip) + _curve(tip, (tip[0] + 40, tip[1] + 70), base_b),
-                  fill=white)
-    d.ellipse((130, 115, 350, 335), fill=white)
-    d.ellipse((140, 255, 380, 640), fill=white)
-    upper = (_curve((312, 160), (405, 150), (432, 245)) + _curve((432, 245), (440, 300), (414, 340))
-             + _curve((414, 340), (406, 290), (378, 268)) + _curve((378, 268), (350, 252), (322, 262)))
-    d.polygon(upper, fill=beak)
-    d.polygon(_curve((326, 262), (372, 262), (384, 292)) + _curve((384, 292), (360, 318), (330, 300)),
-              fill="#3b4752")
-    d.ellipse((238, 168, 296, 226), fill=beak)
-    d.ellipse((259, 179, 276, 196), fill=white)
-
-    margin = 8
-    if tight:
-        bird = bird.crop((70, 0, 470, 400)).resize((s, s), Image.LANCZOS)
-        margin = 2
-    circle = (margin, margin, s - margin, s - margin)
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    ImageDraw.Draw(img).ellipse(circle, fill=STATE_COLORS.get(state, STATE_COLORS["ready"]))
-    mask = Image.new("L", (s, s), 0)
-    ImageDraw.Draw(mask).ellipse(circle, fill=255)
-    bird.putalpha(ImageChops.multiply(bird.getchannel("A"), mask))  # body is cut off at the circle edge
+def icon_image(state: str, size: int = 64) -> Image.Image:
+    """The OffSpeak app icon; its tile takes the state's colour, so it reads even at the 16 px tray size."""
+    bird = Image.open(BIRD_FILE).convert("RGBA")
+    s = bird.width
+    tile = Image.new("RGBA", (2 * s, 2 * s), (0, 0, 0, 0))  # drawn twice as large for smooth corners
+    ImageDraw.Draw(tile).rounded_rectangle((0, 0, 2 * s - 1, 2 * s - 1), radius=2 * s * 112 // 512,
+                                           fill=STATE_COLORS.get(state, STATE_COLORS["error"]))
+    img = tile.resize((s, s), Image.LANCZOS)
     img.alpha_composite(bird)
     return img.resize((size, size), Image.LANCZOS)
 
 
 def tray_image(state: str) -> Image.Image:
     # high resolution, so Windows downsamples to the 16-32 px tray size itself instead of upscaling
-    return icon_image(state, 256, tight=True)
+    return icon_image(state, 256)
 
 
 class Overlay:

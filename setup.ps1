@@ -8,11 +8,15 @@
     Do not download the Parakeet voice model, even if it is not installed yet.
 .PARAMETER NoLaunch
     Do not start Offspeak when the setup is done.
+.PARAMETER Installer
+    Used by OffSpeak-Setup.exe: use the bundled uv, keep Python inside this folder, and leave the
+    Start menu shortcut, autostart and launch to the installer.
 #>
 param(
     [switch]$NoAutostart,
     [switch]$NoModel,
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [switch]$Installer
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,7 +34,16 @@ function Invoke-Checked {
 
 # -- uv (installs and manages Python itself) ---------------------------------
 Step "Checking for uv"
-$uv = (Get-Command uv -ErrorAction SilentlyContinue).Source
+if ($Installer) {
+    # everything lives in the install folder, so uninstalling leaves nothing behind
+    $uv = Join-Path $root "bin\uv.exe"
+    $env:UV_PYTHON_INSTALL_DIR = Join-Path $root "python"
+    $env:UV_PYTHON_PREFERENCE = "only-managed"
+    $env:UV_CACHE_DIR = Join-Path $env:TEMP "offspeak-setup-uv-cache"
+    if (-not (Test-Path $uv)) { throw "The bundled uv is missing: $uv" }
+} else {
+    $uv = (Get-Command uv -ErrorAction SilentlyContinue).Source
+}
 if (-not $uv) {
     $uv = Join-Path $env:USERPROFILE ".local\bin\uv.exe"
     if (-not (Test-Path $uv)) {
@@ -49,6 +62,7 @@ try {
     Invoke-Checked $uv sync --frozen --no-dev
 } finally {
     Pop-Location
+    if ($Installer) { Remove-Item -Recurse -Force $env:UV_CACHE_DIR -ErrorAction SilentlyContinue }
 }
 $offspeak = Join-Path $scripts "offspeak.exe"
 $offspeakw = Join-Path $scripts "offspeakw.exe"
@@ -66,6 +80,11 @@ if (-not $NoModel) {
         Write-Host "Downloading '$defaultVoiceModel'"
         Invoke-Checked $offspeak download-model $defaultVoiceModel
     }
+}
+
+if ($Installer) {
+    Write-Host "`nOffspeak is installed." -ForegroundColor Green
+    exit 0  # the installer creates the shortcut and the autostart entry and starts Offspeak itself
 }
 
 # -- Start menu shortcut -------------------------------------------------------
