@@ -44,7 +44,7 @@ HELP = {
         "Most names and terms only need the Vocabulary. Use replacements for what it cannot fix:\n"
         '• short words: "Jason" -> "JSON"\n'
         '• words that come out very differently: "Kuber Netties" -> "Kubernetes"\n'
-        '• text snippets: "mfg" -> "Mit freundlichen Grüssen"\n'
+        '• text snippets: "my email" -> "anna@example.com"\n'
         "Replacements match whole words, ignore upper and lower case, and run after the vocabulary, so "
         "they always have the last word."
     ),
@@ -52,10 +52,10 @@ HELP = {
         "The voice model already sets periods, commas and question marks by itself. Voice commands are for "
         "what it does not do: line breaks, paragraphs, brackets and quotes, or a specific character.\n"
         '• Several phrasings per command, separated by ";", let you say it the way you are used to '
-        '("Semikolon; Strichpunkt").\n'
-        '• Offspeak tells the command apart from the word: "einverstanden, Punkt." ends the sentence, '
-        '"ein guter Punkt" stays as it is.\n'
-        '• To write a command word itself, say "wörtlich" (or "literally") before it.\n'
+        '("period; full stop").\n'
+        '• Offspeak tells the command apart from the word: "I agree, period." ends the sentence, '
+        '"a long period" stays as it is.\n'
+        '• To write a command word itself, say "literally" (in German "wörtlich") before it.\n'
         "If you mostly dictate plain text, you can switch voice commands off."
     ),
     "shortcuts": (
@@ -395,7 +395,7 @@ class SettingsWindow:
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
             "Words or phrases that are always replaced, regardless of case. Most terms only need the "
             "Vocabulary; use this for short words, very different spellings and snippets such as "
-            '"mfg" -> "Mit freundlichen Grüssen".'
+            '"my email" -> "anna@example.com".'
         )).pack(fill="x", pady=(0, PAD // 2))
         self._help(tab, "replacements")
 

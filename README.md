@@ -11,6 +11,9 @@ Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
 
 ## Highlights
 
+- **Write faster than you ever have.** Dictating with Offspeak reaches about 120 words per minute
+  from key press to inserted text (measured over 115 real dictations), two to three times the usual
+  typing speed. Long prompts for an AI assistant take seconds instead of minutes.
 - **Fast on an ordinary laptop CPU.** With NVIDIA Parakeet, a typical sentence is transcribed in
   0.3 to 0.5 seconds. No GPU is needed.
 - **Private by design.** A built-in network guard refuses every connection that does not stay on the
@@ -19,9 +22,9 @@ Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
   French and Italian, with punctuation and capitalisation.
 - **Gets your jargon right.** Add terms like *Dataverse* or *Claude Code* to the vocabulary, and
   near-misses such as "Databurse" or "Cloud Code" are corrected automatically.
-- **Voice commands.** Say "Komma", "neue Zeile" or "Anführungszeichen" (or "comma", "new line",
-  "quote") to insert punctuation and line breaks. Offspeak tells the command "Punkt" apart from the
-  noun in "ein guter Punkt".
+- **Voice commands.** Say "comma", "new line" or "quote" (in German "Komma", "neue Zeile",
+  "Anführungszeichen") to insert punctuation and line breaks. Offspeak tells the command "period"
+  apart from the noun in "a long period".
 - **Leaves your clipboard alone.** Images, rich text and files on the clipboard survive a dictation,
   and dictated text stays out of the Win+V clipboard history.
 - **Optional AI clean-up.** A mode can pass the text through a local language model (any GGUF file
@@ -99,7 +102,7 @@ result", "Transcribe file..." and "Quit".
 | Tab | What you set there |
 |---|---|
 | **Vocabulary** | Names and technical terms to spell correctly. Terms with 6 or more letters are also fixed when they come out slightly wrong. |
-| **Replacements** | Words that are always replaced, for example "mfg" -> "Mit freundlichen Grüssen". |
+| **Replacements** | Words that are always replaced, for example "my email" -> "anna@example.com". |
 | **Voice commands** | How you say each punctuation command, per language (Deutsch, English, Français, Italiano). |
 | **Shortcuts** | Push-to-talk, start/stop, cancel, and one shortcut per mode. |
 | **Sound** | Optional gentle sounds when a recording starts and stops. |
@@ -118,26 +121,26 @@ spelling; Offspeak fixes whatever sounds similar, so "Ulama" and "Olama" become 
 those variants. This works for terms with 6 or more letters.
 
 Use **Replacements** for what the vocabulary cannot fix: short words ("Jason" -> "JSON"), words that
-come out very differently ("Kuber Netties" -> "Kubernetes") and text snippets ("mfg" -> "Mit
-freundlichen Grüssen"). Replacements run after the vocabulary, so they always win.
+come out very differently ("Kuber Netties" -> "Kubernetes") and text snippets ("my email" ->
+"anna@example.com"). Replacements run after the vocabulary, so they always win.
 
 ### Voice commands
 
 The commands are fixed; you choose how to say them. A few of the defaults:
 
-| Command | Deutsch | English |
+| Command | English | Deutsch |
 |---|---|---|
-| `.` | Punkt | period, full stop |
-| `,` | Komma | comma |
-| `?` | Fragezeichen | question mark |
-| `"..."` | Anführungszeichen (opens, then closes) | quote ... unquote |
-| `( )` | Klammer auf / Klammer zu | open / close parenthesis |
-| new line | neue Zeile | new line |
-| new paragraph | neuer Absatz | new paragraph |
-| next word as text | wörtlich | literally |
+| `.` | period, full stop | Punkt |
+| `,` | comma | Komma |
+| `?` | question mark | Fragezeichen |
+| `"..."` | quote ... unquote | Anführungszeichen (opens, then closes) |
+| `( )` | open / close parenthesis | Klammer auf / Klammer zu |
+| new line | new line | neue Zeile |
+| new paragraph | new paragraph | neuer Absatz |
+| next word as text | literally | wörtlich |
 
-"Ich bin einverstanden, Punkt." becomes *Ich bin einverstanden.*, while "Das ist ein guter Punkt."
-stays as it is. To write a command word itself, say "wörtlich" before it.
+French and Italian are built in as well. "I agree, period." becomes *I agree.*, while "It was a long
+period." stays as it is. To write a command word itself, say "literally" before it.
 
 ## Modes
 
