@@ -5,7 +5,7 @@
 .PARAMETER NoAutostart
     Do not start Offspeak automatically when you sign in to Windows.
 .PARAMETER NoModel
-    Do not download a voice model, even if none is installed yet.
+    Do not download the Parakeet voice model, even if it is not installed yet.
 .PARAMETER NoLaunch
     Do not start Offspeak when the setup is done.
 #>
@@ -56,14 +56,14 @@ if (-not (Test-Path $offspeakw)) { throw "$offspeakw is missing after 'uv sync'.
 
 # -- voice model ---------------------------------------------------------------
 if (-not $NoModel) {
-    Step "Checking for a voice model"
+    Step "Checking for the voice model '$defaultVoiceModel'"
     $check = "import sys; from offspeak import models; from offspeak.config import Config; " +
-             "sys.exit(0 if models.voice_models(Config().settings.model_dirs()) else 1)"
+             "sys.exit(0 if '$defaultVoiceModel' in models.voice_models(Config().settings.model_dirs()) else 1)"
     & (Join-Path $scripts "python.exe") -c $check
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "A voice model is already installed."
+        Write-Host "Already installed."
     } else {
-        Write-Host "No voice model found, downloading '$defaultVoiceModel'"
+        Write-Host "Downloading '$defaultVoiceModel'"
         Invoke-Checked $offspeak download-model $defaultVoiceModel
     }
 }

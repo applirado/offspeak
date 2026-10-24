@@ -88,7 +88,7 @@ and without admin rights:
 
 1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
 2. Offspeak's packages, exactly as pinned in `uv.lock`
-3. the Parakeet voice model, if no voice model is installed yet
+3. the Parakeet voice model, if it is not installed yet
 4. a Start menu shortcut, and autostart when you sign in to Windows
 
 Then it starts Offspeak. Run `setup.cmd` again at any time to update or repair the installation, for
