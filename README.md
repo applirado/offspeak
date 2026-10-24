@@ -77,21 +77,42 @@ How does it differ from Windows voice typing, Wispr Flow or Superwhisper? See
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- [uv](https://docs.astral.sh/uv/), which also installs the right Python version (3.12)
 - About 1 GB of disk space for the Parakeet model
 
+Everything else, including Python, is installed by the setup.
+
 ## Installation
+
+Clone or download the repository and double-click **`setup.cmd`**. It installs, for the current user
+and without admin rights:
+
+1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
+2. Offspeak's packages, exactly as pinned in `uv.lock`
+3. the Parakeet voice model, if no voice model is installed yet
+4. a Start menu shortcut, and autostart when you sign in to Windows
+
+Then it starts Offspeak. Run `setup.cmd` again at any time to update or repair the installation, for
+example after a `git pull` or after moving the folder. Options: `-NoAutostart`, `-NoModel` and
+`-NoLaunch`, for example `setup.cmd -NoAutostart`.
+
+The setup is the only step that uses the internet. After that, Offspeak works offline.
+
+<details>
+<summary>Manual installation with uv</summary>
 
 ```powershell
 git clone https://github.com/applirado/offspeak.git
 cd offspeak
 uv sync
 uv run offspeak download-model parakeet-tdt-0.6b-v3
+uv run offspeak autostart on    # optional
 ```
 
-Downloading the model is the only step that uses the internet. After that, Offspeak works offline.
+</details>
 
 ## Getting started
+
+Start Offspeak from the Start menu, or from the command line:
 
 ```powershell
 uv run offspeak        # with a console window
@@ -129,6 +150,7 @@ result", "Transcribe file..." and "Quit".
 | **Voice commands** | How you say each punctuation command, per language (Deutsch, English, Français, Italiano). |
 | **Shortcuts** | Push-to-talk, start/stop, cancel, and one shortcut per mode. |
 | **Sound** | Optional gentle sounds when a recording starts and stops. |
+| **Startup** | Start Offspeak automatically when you sign in to Windows. |
 
 At the bottom, **Test your rules** shows what your rules make of a sentence. Click **Speak** or hold
 your push-to-talk shortcut, and Offspeak puts the raw transcript into the test field instead of
@@ -201,6 +223,7 @@ uv run offspeak download-model small      # download a whisper.cpp model
 uv run offspeak transcribe recording.wav    # transcribe a file (wav, flac, mp3, ogg)
 uv run offspeak history "Dataverse"         # search past dictations
 uv run offspeak import-superwhisper         # take over modes, vocabulary and shortcuts from Superwhisper
+uv run offspeak autostart on                # start at sign-in (on / off; no argument shows the state)
 ```
 
 ## Where your data lives
