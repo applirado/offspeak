@@ -42,6 +42,8 @@ def gather(mode, app: dict) -> dict:
     ctx: dict = {}
     if mode.context_from_active_app and app:
         ctx["application"] = {"name": app.get("name", ""), "title": app.get("title", "")}
+    if not mode.language_model:  # only the language model reads the selection and clipboard
+        return ctx
     if mode.context_from_selection:
         ctx["selection"] = selected_text()
     if mode.context_from_clipboard:

@@ -142,6 +142,28 @@ def test_history_add_and_search(tmp_path):
     assert next(tmp_path.glob("recordings/*/Output.wav")).exists()
 
 
+def test_history_never_stores_the_context(tmp_path):
+    h = History(tmp_path)
+    secret = {"selection": "hunter2", "clipboard": "IBAN DE00", "application": {"name": "Outlook", "title": "Re: Salary"}}
+    h.add(None, {"mode": "Default", "raw_text": "hi", "result": "Hi", "app_name": "Outlook", "context": secret})
+    meta = next(tmp_path.glob("recordings/*/meta.json")).read_text(encoding="utf-8")
+    assert "hunter2" not in meta and "IBAN" not in meta and "Salary" not in meta
+    assert json.loads(meta)["app_name"] == "Outlook"
+
+
+def test_context_reads_selection_and_clipboard_only_for_a_language_model(monkeypatch):
+    from offspeak import context
+
+    reads = []
+    monkeypatch.setattr(context, "selected_text", lambda: reads.append("selection") or "sel")
+    plain = Mode(key="d", name="D", context_from_selection=True)
+    assert context.gather(plain, {"name": "Code", "title": "x.py"}) == {"application": {"name": "Code", "title": "x.py"}}
+    assert reads == []
+    rewriting = Mode(key="m", name="M", language_model="qwen", context_from_selection=True)
+    assert context.gather(rewriting, {})["selection"] == "sel"
+    assert reads == ["selection"]
+
+
 def test_import_superwhisper(tmp_path, monkeypatch):
     sw = tmp_path / "sw"
     monkeypatch.setattr("offspeak.config.SUPERWHISPER_DIR", sw)

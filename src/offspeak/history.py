@@ -45,7 +45,9 @@ class History:
         folder.mkdir()
         if audio is not None and audio.size:
             save_wav(folder / "Output.wav", audio)
-        meta = {"id": rec_id, "datetime": datetime.now().isoformat(timespec="seconds"), **meta}
+        # the context (selected text, clipboard, window title) only feeds the language model; never store it
+        meta = {"id": rec_id, "datetime": datetime.now().isoformat(timespec="seconds"),
+                **{k: v for k, v in meta.items() if k != "context"}}
         (folder / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
         with self._lock, self._db:
             self._db.execute(
