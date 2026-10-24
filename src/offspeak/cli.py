@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -75,7 +76,20 @@ def cmd_import(_args) -> None:
         print(line)
 
 
+def cmd_autostart(args) -> None:
+    from offspeak import winapi
+
+    if args.state:
+        winapi.set_autostart(args.state == "on")
+    command = winapi.get_autostart()
+    print(f"Autostart is on: {command}" if command else "Autostart is off.")
+
+
 def main() -> None:
+    # pythonw / offspeakw has no console, so these are None; libraries such as pywhispercpp call flush() on them
+    for name in ("stdout", "stderr"):
+        if getattr(sys, name) is None:
+            setattr(sys, name, open(os.devnull, "w"))
     parser = argparse.ArgumentParser(prog="offspeak", description="Offline voice dictation.")
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("run", help="start the tray app (default)").set_defaults(func=cmd_run)
@@ -94,5 +108,8 @@ def main() -> None:
     p.add_argument("name")
     p.set_defaults(func=cmd_download)
     sub.add_parser("import-superwhisper", help="import modes and settings from Superwhisper").set_defaults(func=cmd_import)
+    p = sub.add_parser("autostart", help="start Offspeak when you sign in to Windows (on/off; no argument shows the state)")
+    p.add_argument("state", nargs="?", choices=("on", "off"))
+    p.set_defaults(func=cmd_autostart)
     args = parser.parse_args()
     (getattr(args, "func", None) or cmd_run)(args)

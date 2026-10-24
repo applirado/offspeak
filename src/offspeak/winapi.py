@@ -1,5 +1,8 @@
 import ctypes
+import subprocess
+import sys
 import time
+import winreg
 from ctypes import wintypes
 from pathlib import Path
 
@@ -253,6 +256,40 @@ def acquire_single_instance(name: str) -> bool:
     kernel32.CreateMutexW.restype = wintypes.HANDLE
     _instance_mutex = kernel32.CreateMutexW(None, False, name)
     return ctypes.get_last_error() != 183  # ERROR_ALREADY_EXISTS
+
+
+RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
+RUN_VALUE = "Offspeak"
+
+
+def autostart_command() -> str:
+    """Console-less command that starts the tray app from the current installation."""
+    scripts = Path(sys.executable).parent
+    launcher = scripts / "offspeakw.exe"
+    if launcher.exists():
+        return subprocess.list2cmdline([str(launcher), "run"])
+    pythonw = scripts / "pythonw.exe"
+    return subprocess.list2cmdline([str(pythonw if pythonw.exists() else sys.executable), "-m", "offspeak", "run"])
+
+
+def get_autostart() -> str | None:
+    """The command Windows runs at sign-in, or None if Offspeak does not start automatically."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
+            return winreg.QueryValueEx(key, RUN_VALUE)[0]
+    except FileNotFoundError:
+        return None
+
+
+def set_autostart(enabled: bool) -> None:
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
+        if enabled:
+            winreg.SetValueEx(key, RUN_VALUE, 0, winreg.REG_SZ, autostart_command())
+        else:
+            try:
+                winreg.DeleteValue(key, RUN_VALUE)
+            except FileNotFoundError:
+                pass
 
 
 def enable_dpi_awareness() -> None:

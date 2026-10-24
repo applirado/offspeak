@@ -120,6 +120,7 @@ class SettingsWindow:
         notebook.add(self._commands_tab(notebook), text="Voice commands")
         notebook.add(self._shortcuts_tab(notebook), text="Shortcuts")
         notebook.add(self._sound_tab(notebook, settings), text="Sound")
+        notebook.add(self._startup_tab(notebook), text="Startup")
         notebook.bind("<<NotebookTabChanged>>", lambda _e: self._end_capture())
         self._preview_section()
 
@@ -514,6 +515,19 @@ class SettingsWindow:
         self.dirty = True
         self.status_var.set("")
 
+    # -- startup -------------------------------------------------------------
+    def _startup_tab(self, parent) -> ttk.Frame:
+        tab = ttk.Frame(parent, padding=PAD)
+        self.autostart_var = tk.BooleanVar(value=winapi.get_autostart() is not None)
+        ttk.Checkbutton(tab, text="Start Offspeak when I sign in to Windows", variable=self.autostart_var,
+                        command=lambda: (setattr(self, "dirty", True), self.status_var.set(""))
+                        ).pack(anchor="w", pady=(0, PAD))
+        ttk.Label(tab, wraplength=WRAP, justify="left", text=(
+            "Offspeak then starts in the tray, without a console window, from the installation it is running "
+            'from now. Turn it off and on again after moving Offspeak. Also available as "offspeak autostart".'
+        )).pack(fill="x")
+        return tab
+
     # -- test area -----------------------------------------------------------
     def _preview_section(self) -> None:
         frame = ttk.LabelFrame(self.win, text="Test your rules", padding=PAD)
@@ -596,6 +610,8 @@ class SettingsWindow:
         self._update_preview()
 
     def save(self) -> None:
+        if self.autostart_var.get() != (winapi.get_autostart() is not None):
+            winapi.set_autostart(self.autostart_var.get())
         self.on_save({
             "vocabulary": list(self.vocabulary),
             "replacements": [dict(r) for r in self.replacements],
