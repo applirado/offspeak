@@ -27,7 +27,7 @@ def _from_dict(cls, data: dict):
 class Mode:
     key: str
     name: str
-    voice_model: str = "small"
+    voice_model: str = "parakeet-tdt-0.6b-v3"
     language: str = "auto"
     translate_to_english: bool = False
     language_model: str = ""

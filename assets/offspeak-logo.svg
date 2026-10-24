@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 702" width="640" height="702">
+  <title>OffSpeak</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&amp;display=swap');
+    .title { font-family: Poppins, 'Segoe UI', Arial, sans-serif; font-weight: 800; font-size: 92px;
+             letter-spacing: -1.5px; }
+    .subtitle { font-family: Poppins, 'Segoe UI', Arial, sans-serif; font-weight: 500; font-size: 34px;
+                fill: #5B6170; }
+  </style>
+
+  <!-- app icon -->
+  <svg x="64" y="0" width="512" height="512" viewBox="0 0 512 512">
+    <defs>
+      <clipPath id="offspeak-tile">
+        <rect width="512" height="512" rx="112" ry="112"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#offspeak-tile)">
+      <rect width="512" height="512" fill="#FDB404"/>
+
+      <!-- crest: tall feather curving right, feather pointing up-left, cream feather pointing left -->
+      <path fill="#FDE3A3" d="M205 36 C232 76 300 112 344 154 C366 176 380 198 386 226 L300 250 L250 172
+               C224 146 202 112 199 84 C198 66 200 48 205 36 Z"/>
+      <path fill="#FEE8B4" d="M125 98 C152 128 205 156 258 176 L300 236 L172 214
+               C142 184 121 140 125 98 Z"/>
+      <path fill="#FEF6E6" d="M74 199 C112 194 196 200 262 214 L236 282 C186 284 134 272 108 254
+               C92 241 81 223 74 199 Z"/>
+
+      <!-- head, back and neck -->
+      <path fill="#FEFDFB" d="M318 196 C354 196 381 216 387 246 L362 296 C349 326 340 360 341 420
+               C341 460 334 490 322 512 L120 512 L116 380 C160 318 206 256 254 219
+               C274 204 296 196 318 196 Z"/>
+
+      <!-- wing -->
+      <path fill="#FDEFCE" d="M18 502 C48 452 84 404 118 391 C158 377 200 390 226 412
+               C256 438 275 470 285 512 L0 512 Z"/>
+
+      <!-- beak: upper mandible with hook, lower mandible, mouth line -->
+      <path fill="#373E5D" d="M387 232 C416 240 437 266 442 302 C446 333 440 362 424 384
+               C421 370 416 356 408 347 C392 341 368 334 344 336 C344 300 351 266 369 247
+               C375 240 381 235 387 232 Z"/>
+      <path fill="#343B59" d="M344 334 C368 334 392 340 406 348 C402 368 390 384 372 391
+               C360 395 349 393 343 386 Z"/>
+      <path fill="none" stroke="#252A44" stroke-width="5" stroke-linecap="round"
+            d="M346 330 C346 322 347 316 350 313 C368 320 388 332 406 347"/>
+
+      <!-- eye -->
+      <circle cx="309.5" cy="274" r="21" fill="#1E2440"/>
+    </g>
+  </svg>
+
+  <!-- title and subtitle: plain SVG text, edit freely -->
+  <text class="title" x="320" y="618" text-anchor="middle"><tspan fill="#11173A">Off</tspan><tspan fill="#F2A20C">Speak</tspan></text>
+  <text class="subtitle" x="320" y="676" text-anchor="middle">Dictate Fast, Stay Local</text>
+</svg>

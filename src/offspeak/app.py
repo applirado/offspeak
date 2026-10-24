@@ -268,7 +268,7 @@ class App:
 
         path = filedialog.askopenfilename(
             parent=self.overlay.root, title="Transcribe audio file",
-            filetypes=[("Audio", "*.wav *.flac *.mp3 *.ogg *.m4a"), ("All files", "*.*")])
+            filetypes=[("Audio", "*.wav *.flac *.mp3 *.ogg"), ("All files", "*.*")])
         if path:
             self._set_state("processing", "Transcribing file")
             self.worker.submit(self._process_file, path, self.config.active_mode)
