@@ -61,9 +61,13 @@ def test_replacements_whole_word_case_insensitive():
     ("Views erstellen in Dataverse zu automatisieren", "Views erstellen in Dataverse zu automatisieren"),
     ("die Power-Platform-Skills", "die Power-Platform-Skills"),
     ("Nutzung von Cloud Code mit Plan", "Nutzung von Claude Code mit Plan"),
+    ("Modelle lokal mit Ulama starten", "Modelle lokal mit Ollama starten"),
+    ("lokal mit Olama", "lokal mit Ollama"),
+    ("alle Alarme und eine Lama-Herde", "alle Alarme und eine Lama-Herde"),
+    ("Ich habe unsere Anmeldung geprüft", "Ich habe unsere Anmeldung geprüft"),
 ])
 def test_correct_vocabulary(text, expected):
-    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code"]
+    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code", "Ollama"]
     assert correct_vocabulary(text, vocab) == expected
 
 

@@ -32,6 +32,24 @@ def clean_llm_output(output: str, transcript: str) -> str:
     return output
 
 
+VOWELS = set("aeiouäöüy")
+
+
+def _same_start(a: str, b: str) -> bool:
+    # recognisers often swap a leading vowel ("Ulama" for "Ollama")
+    return a[0] == b[0] or (a[0] in VOWELS and b[0] in VOWELS)
+
+
+def _squeeze(s: str) -> str:
+    """Doubled letters sound like single ones: "ollama" -> "olama"."""
+    return re.sub(r"(.)\1+", r"\1", s)
+
+
+def _likeness(a: str, b: str) -> float:
+    return max(difflib.SequenceMatcher(None, a, b).ratio(),
+               difflib.SequenceMatcher(None, _squeeze(a), _squeeze(b)).ratio())
+
+
 def correct_vocabulary(text: str, vocabulary: list[str], threshold: float = 0.75) -> str:
     """Snap near-miss spellings ("Databurse", "Data verse") to vocabulary terms."""
     tokens = list(re.finditer(r"\w+", text))
@@ -51,8 +69,8 @@ def correct_vocabulary(text: str, vocabulary: list[str], threshold: float = 0.75
                 start, end = window[0].start(), window[-1].end()
                 if candidate == target:
                     score = 1.0
-                elif (candidate[0] == target[0] and abs(len(candidate) - len(target)) <= max(2, len(target) // 5)):
-                    score = difflib.SequenceMatcher(None, candidate, target).ratio()
+                elif _same_start(candidate, target) and abs(len(candidate) - len(target)) <= max(2, len(target) // 5):
+                    score = _likeness(candidate, target)
                     if score < threshold:
                         continue
                 else:
