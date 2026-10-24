@@ -216,6 +216,18 @@ The code is in `src/offspeak/`. The text pipeline is rule-based and has no UI de
 The landing page is the single file `website/index.html`; it has no build step and loads nothing from
 other servers.
 
+## Thanks
+
+Offspeak's speed comes from **NVIDIA Parakeet TDT 0.6B v3**. It transcribes a typical sentence in a
+third of a second on an ordinary laptop CPU, sets punctuation by itself and understands 25 European
+languages. Switching from whisper.cpp to Parakeet made dictation more than twice as fast end to end.
+Thank you to the NVIDIA NeMo team for releasing it openly
+([model card](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), CC BY 4.0).
+
+Offspeak also builds on [onnx-asr](https://github.com/istupakov/onnx-asr), which runs Parakeet with
+[ONNX Runtime](https://onnxruntime.ai), on [whisper.cpp](https://github.com/ggml-org/whisper.cpp) and
+on [llama.cpp](https://github.com/ggml-org/llama.cpp).
+
 ## License
 
 OffSpeak is released under the [MIT License](LICENSE). The voice models are not part of this
