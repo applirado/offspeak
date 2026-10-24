@@ -24,6 +24,8 @@ TYPING_VKS = {0x08, 0x09, 0x0D, 0x20, *range(0x30, 0x3A), *range(0x41, 0x5B)}
 
 PAD = 8
 WRAP = 600
+ACCENT = "#0067c0"  # Windows 11 default accent
+TAB_TEXT, TAB_TEXT_DIM = "#1a1a1a", "#6b6b6b"
 BASE_SIZE = 700
 BASE_HEIGHT = 760
 ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.7, 2.0, 0.1
@@ -71,10 +73,11 @@ class SettingsWindow:
         self.on_save = on_save
         self.on_zoom = on_zoom or (lambda _zoom: None)
         self.zoom = min(ZOOM_MAX, max(ZOOM_MIN, settings.ui_zoom))
-        self._font_base = {"list": 10, "hint": 9, "result": 10, "title": 11, "close": 11}
+        self._font_base = {"list": 10, "hint": 9, "result": 10, "title": 11, "close": 11, "tab": 10}
         self.fonts = {
             "title": tkfont.Font(family="Segoe UI", size=11, weight="bold"),
             "close": tkfont.Font(family="Segoe UI", size=11),
+            "tab": tkfont.Font(family="Segoe UI Semibold", size=10),
             "list": tkfont.Font(family="Segoe UI", size=10),
             "hint": tkfont.Font(family="Segoe UI", size=9, slant="italic"),
             "result": tkfont.Font(family="Segoe UI", size=10, weight="bold"),
@@ -115,15 +118,17 @@ class SettingsWindow:
         self.lang_var = tk.StringVar(value=LANGUAGES.get(language, LANGUAGES["de"]))
 
         self._header()
-        notebook = ttk.Notebook(self.win)
-        notebook.pack(fill="both", expand=True, padx=PAD, pady=(PAD, 0))
+        notebook = ttk.Notebook(self.win, style="Pages.TNotebook")
         notebook.add(self._vocabulary_tab(notebook), text="Vocabulary")
         notebook.add(self._replacements_tab(notebook), text="Replacements")
         notebook.add(self._commands_tab(notebook), text="Voice commands")
         notebook.add(self._shortcuts_tab(notebook), text="Shortcuts")
         notebook.add(self._sound_tab(notebook, settings), text="Sound")
         notebook.add(self._startup_tab(notebook), text="Startup")
-        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._end_capture())
+        tab_bar = self._tab_bar(notebook)
+        notebook.pack(fill="both", expand=True, padx=PAD, pady=(PAD, 0))
+        notebook.enable_traversal()  # Ctrl+Tab / Ctrl+Shift+Tab
+        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._end_capture(), add=True)
         self._preview_section()
 
         buttons = ttk.Frame(self.win)
@@ -145,6 +150,12 @@ class SettingsWindow:
         self._apply_zoom()
         self._refresh()
         self.win.update_idletasks()
+        # all tab headers must fit, also with large fonts or display scaling
+        needed = tab_bar.winfo_reqwidth() + 4 * PAD
+        self.win.minsize(max(560, needed), 480)
+        if width < needed:
+            self.win.geometry(f"{needed}x{height}")
+            self.win.update_idletasks()
         winapi.remove_caption(int(self.win.wm_frame(), 16))
         # idle callbacks run once the pending resize events are handled, so the final layout is what appears
         self.win.after_idle(self._reveal)
@@ -173,6 +184,37 @@ class SettingsWindow:
         for widget in (header, icon, title):  # drag the window by its header
             widget.bind("<ButtonPress-1>", self._start_drag)
             widget.bind("<B1-Motion>", self._drag)
+
+    # -- tabs (the native vista tabs are barely visible on Windows 11) -------
+    def _tab_bar(self, notebook: ttk.Notebook) -> tk.Frame:
+        """Windows 11 style headers: text tabs with an accent bar under the selected one."""
+        style = ttk.Style(self.win)
+        style.layout("Pages.TNotebook.Tab", [])  # the notebook only switches pages; this bar shows the tabs
+        bg = style.lookup("TFrame", "background") or "SystemButtonFace"
+        bar = tk.Frame(self.win, bg=bg)
+        bar.pack(fill="x", padx=PAD * 2, pady=(PAD, 0))
+        self._tabs: list[tuple[tk.Label, tk.Frame]] = []
+        for index, page in enumerate(notebook.tabs()):
+            cell = tk.Frame(bar, bg=bg, cursor="hand2")
+            cell.pack(side="left", padx=(0, PAD * 2))
+            label = tk.Label(cell, text=notebook.tab(page, "text"), font=self.fonts["tab"], bg=bg, padx=2, pady=2)
+            label.pack()
+            line = tk.Frame(cell, height=3, bg=bg)
+            line.pack(fill="x", padx=2)
+            for widget in (cell, label, line):
+                widget.bind("<Button-1>", lambda _e, i=index: notebook.select(i))
+                widget.bind("<Enter>", lambda _e, i=index: self._show_tabs(notebook, hover=i))
+                widget.bind("<Leave>", lambda _e: self._show_tabs(notebook))
+            self._tabs.append((label, line))
+        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._show_tabs(notebook), add=True)
+        self._show_tabs(notebook)
+        return bar
+
+    def _show_tabs(self, notebook: ttk.Notebook, hover: int | None = None) -> None:
+        selected = notebook.index("current")
+        for index, (label, line) in enumerate(self._tabs):
+            label.configure(fg=TAB_TEXT if index in (selected, hover) else TAB_TEXT_DIM)
+            line.configure(bg=ACCENT if index == selected else line.master["bg"])
 
     def _start_drag(self, event) -> None:
         self._drag_offset = (event.x_root - self.win.winfo_x(), event.y_root - self.win.winfo_y())
@@ -205,6 +247,8 @@ class SettingsWindow:
             f.configure(size=_scaled(base, self.zoom))
         for key, f in self.fonts.items():
             f.configure(size=_scaled(self._font_base[key], self.zoom))
+        for _label, line in self._tabs:
+            line.configure(height=max(2, round(3 * self.zoom)))
         linespace = tkfont.nametofont("TkDefaultFont", root=self.win).metrics("linespace")
         ttk.Style(self.win).configure("Treeview", rowheight=linespace + 6)
         for widget in _widgets(self.win):
