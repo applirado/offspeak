@@ -219,6 +219,8 @@ OffSpeak is released under the [MIT License](LICENSE). The voice models are not 
 repository; they are downloaded during setup under their own licenses (NVIDIA Parakeet: CC BY 4.0,
 whisper.cpp models: MIT).
 
+Made by Applirado.
+
 ---
 
 ```
