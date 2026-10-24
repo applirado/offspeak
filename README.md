@@ -110,6 +110,19 @@ uv run offspeak autostart on    # optional
 
 </details>
 
+### macOS (preview)
+
+On a Mac with Apple Silicon, run `./setup.sh` in the cloned folder. It installs uv, Python 3.12, the
+packages and the Parakeet model, the same way as on Windows. The menu bar app, global shortcuts and
+pasting are not ported yet; for now you can dictate in the terminal:
+
+```bash
+.venv/bin/offspeak listen       # speak, press Enter, get the text
+```
+
+macOS asks once for microphone access for your terminal app. Settings, modes and models live in
+`~/Library/Application Support/Offspeak`.
+
 ## Getting started
 
 Start Offspeak from the Start menu, or from the command line:
@@ -221,6 +234,7 @@ uv run offspeak download-model small      # download a whisper.cpp model
 
 ```powershell
 uv run offspeak transcribe recording.wav    # transcribe a file (wav, flac, mp3, ogg)
+uv run offspeak listen                      # record until Enter, then print the text and the timing
 uv run offspeak history "Dataverse"         # search past dictations
 uv run offspeak import-superwhisper         # take over modes, vocabulary and shortcuts from Superwhisper
 uv run offspeak autostart on                # start at sign-in (on / off; no argument shows the state)

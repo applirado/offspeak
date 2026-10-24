@@ -4,7 +4,6 @@ import functools
 import io
 import threading
 import wave
-import winsound
 
 import numpy as np
 
@@ -64,6 +63,8 @@ def wav_bytes(theme: str, event: str, volume: float) -> bytes:
 
 def play(theme: str, event: str, volume: float) -> None:
     """Fire and forget; SND_MEMORY cannot be combined with SND_ASYNC, so play on a thread."""
+    import winsound
+
     if volume <= 0:
         return
     data = wav_bytes(theme if theme in THEMES else "soft", event, round(volume, 2))

@@ -1,9 +1,12 @@
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
-DATA_DIR = Path(os.environ.get("OFFSPEAK_HOME") or Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Offspeak")
+_APP_DATA = (Path.home() / "Library" / "Application Support" if sys.platform == "darwin"
+             else Path(os.environ.get("LOCALAPPDATA", Path.home())))
+DATA_DIR = Path(os.environ.get("OFFSPEAK_HOME") or _APP_DATA / "Offspeak")
 SUPERWHISPER_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "com.superwhisper.app"
 
 DEFAULT_PROMPT = (

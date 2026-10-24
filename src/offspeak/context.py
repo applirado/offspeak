@@ -1,7 +1,5 @@
 import threading
 
-from offspeak import winapi
-
 
 def selected_text(timeout: float = 0.5) -> str:
     """Read the focused control's selection through UI Automation, without sending keystrokes."""
@@ -45,5 +43,7 @@ def gather(mode, app: dict) -> dict:
     if mode.context_from_selection:
         ctx["selection"] = selected_text()
     if mode.context_from_clipboard:
+        from offspeak import winapi
+
         ctx["clipboard"] = winapi.get_clipboard_text() or ""
     return ctx

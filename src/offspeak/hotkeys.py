@@ -2,8 +2,6 @@ import re
 from dataclasses import dataclass
 from typing import Callable
 
-from offspeak import winapi
-
 WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP = 0x100, 0x101, 0x104, 0x105
 LLKHF_INJECTED = 0x10
 
@@ -90,6 +88,8 @@ def parse_shortcut(text: str) -> Hotkey | None:
 
 
 def current_modifiers() -> frozenset[str]:
+    from offspeak import winapi
+
     return frozenset(name for name, (vk, _) in MODIFIERS.items() if winapi.key_down(vk) or
                      (name == "win" and winapi.key_down(0x5C)))
 

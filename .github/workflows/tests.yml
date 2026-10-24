@@ -1,0 +1,46 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install packages
+        run: uv sync --frozen
+      - name: Unit tests
+        run: uv run --frozen pytest -q
+      - name: Native libraries load
+        run: uv run --frozen python -c "import onnxruntime, onnx_asr, pywhispercpp.model, llama_cpp, sounddevice, soundfile; print('ok')"
+
+  # end-to-end on macOS: speak a sentence with `say`, transcribe it with Parakeet
+  macos-transcribe:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install packages
+        run: uv sync --frozen --no-dev
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Application Support/Offspeak/models
+          key: parakeet-tdt-0.6b-v3
+      - name: Download Parakeet
+        run: |
+          uv run --frozen python -c "import sys; from offspeak import models; from offspeak.config import Config; sys.exit(0 if 'parakeet-tdt-0.6b-v3' in models.voice_models(Config().settings.model_dirs()) else 1)" \
+            || uv run --frozen offspeak download-model parakeet-tdt-0.6b-v3
+      - name: Transcribe a spoken sentence
+        run: |
+          say -o hello.aiff "Hello, this is a quick test of the dictation app."
+          uv run --frozen offspeak transcribe hello.aiff --json | tee result.json
+          grep -qi "quick test" result.json
+      - name: Tray app explains it is not ported yet
+        run: uv run --frozen offspeak run 2>&1 | grep -q "only available on Windows"

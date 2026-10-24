@@ -7,7 +7,17 @@ from pathlib import Path
 from offspeak.config import DATA_DIR, Config
 
 
+def _not_on_this_platform(feature: str) -> bool:
+    if sys.platform == "win32":
+        return False
+    print(f"{feature} is only available on Windows so far. Try 'offspeak listen' to dictate in the terminal.",
+          file=sys.stderr)
+    return True
+
+
 def cmd_run(_args) -> None:
+    if _not_on_this_platform("The tray app"):
+        return
     from offspeak import winapi
     from offspeak.app import run_app
 
@@ -17,6 +27,22 @@ def cmd_run(_args) -> None:
     run_app()
 
 
+def _mode(config: Config, args):
+    mode = config.modes[args.mode] if args.mode else config.active_mode
+    if args.no_llm:
+        mode.language_model = ""
+    return mode
+
+
+def _print_result(result: dict | None, as_json: bool) -> None:
+    if result is None:
+        print("(no speech detected)", file=sys.stderr)
+    elif as_json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(result["result"])
+
+
 def cmd_transcribe(args) -> None:
     from offspeak import netguard
     from offspeak.audio import load_audio_file
@@ -24,17 +50,28 @@ def cmd_transcribe(args) -> None:
 
     netguard.install()
     config = Config()
-    mode = config.modes[args.mode] if args.mode else config.active_mode
-    if args.no_llm:
-        mode.language_model = ""
-    result = Pipeline(config.settings).run(load_audio_file(Path(args.file)), mode, {})
-    if result is None:
-        print("(no speech detected)", file=sys.stderr)
-        return
-    if args.json:
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    else:
-        print(result["result"])
+    _print_result(Pipeline(config.settings).run(load_audio_file(Path(args.file)), _mode(config, args), {}), args.json)
+
+
+def cmd_listen(args) -> None:
+    from offspeak import netguard
+    from offspeak.audio import Recorder
+    from offspeak.pipeline import Pipeline
+
+    netguard.install()
+    config = Config()
+    mode = _mode(config, args)
+    pipeline = Pipeline(config.settings)
+    print(f"Loading {mode.voice_model} ...", file=sys.stderr)
+    pipeline.preload(mode)
+    recorder = Recorder()
+    recorder.start()
+    print("Speak now, then press Enter.", file=sys.stderr)
+    input()
+    result = pipeline.run(recorder.stop(), mode, {})
+    if result is not None:
+        print(f"({result['duration_ms'] / 1000:.1f} s of audio, transcribed in {result['stt_ms']} ms)", file=sys.stderr)
+    _print_result(result, args.json)
 
 
 def cmd_history(args) -> None:
@@ -77,6 +114,8 @@ def cmd_import(_args) -> None:
 
 
 def cmd_autostart(args) -> None:
+    if _not_on_this_platform("Autostart"):
+        return
     from offspeak import winapi
 
     if args.state:
@@ -95,10 +134,13 @@ def main() -> None:
     sub.add_parser("run", help="start the tray app (default)").set_defaults(func=cmd_run)
     p = sub.add_parser("transcribe", help="transcribe an audio file")
     p.add_argument("file")
-    p.add_argument("--mode", help="mode key (default: active mode)")
-    p.add_argument("--no-llm", action="store_true", help="skip language-model clean-up")
-    p.add_argument("--json", action="store_true", help="print full result as JSON")
     p.set_defaults(func=cmd_transcribe)
+    q = sub.add_parser("listen", help="record from the microphone until Enter, then print the text")
+    q.set_defaults(func=cmd_listen)
+    for p in (p, q):
+        p.add_argument("--mode", help="mode key (default: active mode)")
+        p.add_argument("--no-llm", action="store_true", help="skip language-model clean-up")
+        p.add_argument("--json", action="store_true", help="print full result as JSON")
     p = sub.add_parser("history", help="show or search past dictations")
     p.add_argument("query", nargs="?")
     p.add_argument("-n", "--limit", type=int, default=20)
