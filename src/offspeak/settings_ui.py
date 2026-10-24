@@ -96,6 +96,8 @@ class SettingsWindow:
         self.dirty = False
 
         self.win = tk.Toplevel(master)
+        # Windows shows a new toplevel at once; keep it invisible until it is built, or it flashes small, then grows
+        self.win.attributes("-alpha", 0.0)
         self.win.title("Offspeak - Settings")
         self._icon = ImageTk.PhotoImage(icon_image("ready", 64), master=self.win)
         self.win.iconphoto(False, self._icon)
@@ -144,6 +146,11 @@ class SettingsWindow:
         self._refresh()
         self.win.update_idletasks()
         winapi.remove_caption(int(self.win.wm_frame(), 16))
+        # idle callbacks run once the pending resize events are handled, so the final layout is what appears
+        self.win.after_idle(self._reveal)
+
+    def _reveal(self) -> None:
+        self.win.attributes("-alpha", 1.0)
         self.win.lift()
         self.win.focus_force()
 
