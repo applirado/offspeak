@@ -27,9 +27,6 @@ Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
 - **Optional AI clean-up.** A mode can pass the text through a local language model (any GGUF file
   via llama.cpp) to rewrite, format or translate it.
 
-How does it differ from Windows voice typing, Wispr Flow or Superwhisper? See
-[docs/comparison.md](docs/comparison.md).
-
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
