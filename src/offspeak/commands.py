@@ -124,7 +124,7 @@ def _adjective_after_determiner(lang: str, word: str, before: str) -> bool:
     return word in (FR_ADJECTIVES if lang == "fr" else IT_ADJECTIVES)
 
 
-def _used_as_word(tokens: list[dict], start: int, end: int, cmd: dict) -> bool:
+def _used_as_word(tokens: list[dict], start: int, end: int, cmd: dict, phrases: list[tuple[str, dict]]) -> bool:
     """Tell "ein guter Punkt." (the noun) apart from "einverstanden, Punkt." (the command)."""
     if cmd["kind"] == "escape":
         return False
@@ -136,10 +136,13 @@ def _used_as_word(tokens: list[dict], start: int, end: int, cmd: dict) -> bool:
     if prev_word in DETERMINERS.get(lang, ()):
         return True
     before = tokens[start - 2] if start >= 2 and tokens[start - 2]["type"] == "word" else None
-    if before and _adjective_after_determiner(lang, prev["t"], before["t"].lower()):
+    # "ein guter Punkt", "a long period"; phrases of several words ("open parenthesis") are not nouns
+    if before and " " not in cmd["phrase"].strip() and _adjective_after_determiner(lang, prev["t"], before["t"].lower()):
         return True
     # a dictated sentence end is followed by punctuation or a new sentence, not by "Punkt fehlt"
     if cmd["symbol"] in SENTENCE_END and end < len(tokens):
+        if _match(tokens, end, phrases):  # another command follows: "Punkt neue Zeile"
+            return False
         after = tokens[end]
         return after["type"] == "word" and after["t"][0].islower()
     return False
@@ -196,7 +199,7 @@ def apply_voice_commands(text: str, commands: list[dict]) -> str:
                 i += 1
                 continue
             hit = _match(tokens, i, phrases)
-            if hit and _used_as_word(tokens, i, hit[1], hit[0]):
+            if hit and _used_as_word(tokens, i, hit[1], hit[0], phrases):
                 hit = None
             if hit:
                 cmd, i = hit
