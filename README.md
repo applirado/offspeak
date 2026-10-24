@@ -210,6 +210,15 @@ The code is in `src/offspeak/`. The text pipeline is rule-based and has no UI de
 `commands.py` handles voice commands, `textproc.py` handles vocabulary and replacements, and
 `pipeline.py` ties speech recognition and post-processing together.
 
+The landing page is the single file `website/index.html`; it has no build step and loads nothing from
+other servers.
+
+## License
+
+OffSpeak is released under the [MIT License](LICENSE). The voice models are not part of this
+repository; they are downloaded during setup under their own licenses (NVIDIA Parakeet: CC BY 4.0,
+whisper.cpp models: MIT).
+
 ---
 
 ```
