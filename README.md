@@ -51,9 +51,9 @@ Like the cockatoo in its logo, OffSpeak repeats what it hears, only more neatly.
 
 - **Works in every app.** One hotkey for Outlook, Teams, Word, Slack, your browser, your code editor
   and your AI assistant. You do not have to learn a different microphone button in every program.
-- **Write faster than you ever have.** Dictating with OffSpeak reaches about 120 words per minute
-  from key press to inserted text (measured over 115 real dictations), two to three times the usual
-  typing speed. A long email or a detailed prompt takes seconds instead of minutes.
+- **Faster than typing.** In our own measurements over 115 real dictations, OffSpeak reached about
+  120 words per minute from key press to inserted text, roughly two to three times a typical typing
+  speed. A long email or a detailed prompt takes seconds instead of minutes.
 - **Fast on an ordinary laptop CPU.** With NVIDIA Parakeet, a typical sentence is transcribed in
   0.3 to 0.5 seconds. No GPU is needed.
 - **Private by design.** A built-in network guard refuses every connection that does not stay on the
@@ -83,12 +83,23 @@ a lot, and for text that should not leave your PC:
 | Where it works | in every app | only in that app | in every app | in every app |
 | Where your voice goes | nowhere: recognition runs on your PC | to the provider's servers | to Microsoft's servers | mostly to the provider's servers |
 | Works offline | yes | no | no | some, with a local model |
-| Technical terms and names | your own vocabulary, which also fixes near-misses | varies | rarely right | usually a personal dictionary |
+| Technical terms and names | your own vocabulary, which also fixes near-misses | varies | often misheard in our tests | usually a personal dictionary |
 | English terms in German text | yes: the language is detected for you, and the vocabulary keeps your terms intact | varies | no: one language at a time | varies |
 | Cost | free and open source (MIT) | part of the app | free | a monthly or yearly subscription |
 
 That makes OffSpeak a good fit for confidential mail, customer data and workplaces where cloud speech
 recognition is not allowed.
+
+### And other open-source dictation apps?
+
+There are larger open-source dictation apps that do much more than OffSpeak: meeting transcription, AI
+assistants, notes, cloud models, Linux. If you want those, they are the better choice.
+
+OffSpeak deliberately does one thing: dictation that never goes online. It has no cloud option and no
+account, so there is nothing to switch off and nothing to sign in to, and the
+[network guard](src/offspeak/netguard.py) that blocks every outside connection is a few lines you can
+read. The whole app is a small Python project. Its effort goes into the details of dictating: technical
+terms, voice commands that are not mistaken for words, and a clipboard that is left as it was.
 
 ## Requirements
 
