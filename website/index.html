@@ -468,18 +468,16 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
       <div class="head">
         <p class="eyebrow">Install</p>
         <h2>Three steps, no admin rights.</h2>
-        <p>The installer sets up everything OffSpeak needs, Python included, just for your user account. Remove it any time under Settings › Apps.</p>
+        <p>One line sets up everything OffSpeak needs, Python included, just for your user account. Remove it any time under Settings › Apps.</p>
       </div>
       <ol class="steps">
-        <li><h3>Download the installer</h3><p>Get <code>OffSpeak-Setup.exe</code> from the <a href="https://github.com/applirado/offspeak/releases/latest">latest release</a> on GitHub.</p></li>
-        <li><h3>Run it</h3><p>It downloads Python, the packages and the Parakeet voice model (about 1 GB). If Windows SmartScreen warns about an unknown publisher, click <em>More info</em>, then <em>Run anyway</em>.</p></li>
+        <li><h3>Open PowerShell</h3><p>Press the Windows key, type <em>PowerShell</em> and press Enter. Terminal works too.</p></li>
+        <li><h3>Paste the line below</h3><p>It downloads the <a href="https://github.com/applirado/offspeak/releases/latest">latest release</a>, Python, the packages and the Parakeet voice model (about 1 GB). Read <a href="https://github.com/applirado/offspeak/blob/main/install.ps1">the script</a> first if you like; it is short.</p></li>
         <li><h3>Hold Ctrl+Space</h3><p>The cockatoo sits in the tray. Hold the shortcut, talk, let go. Change shortcuts, vocabulary and sounds with a left-click on it.</p></li>
       </ol>
       <div class="code">
-        <pre id="install-cmd"><span class="c"># or from the source code, in PowerShell or Terminal</span>
-git clone https://github.com/applirado/offspeak.git
-cd offspeak
-.\setup.cmd</pre>
+        <pre id="install-cmd"><span class="c"># in PowerShell or Terminal; run it again to update</span>
+powershell -c "irm https://applirado.github.io/offspeak/install.ps1 | iex"</pre>
         <button class="copy" id="copy" type="button">Copy</button>
       </div>
       <ul class="reqs">

@@ -99,33 +99,35 @@ Everything else, including Python, is installed by the setup.
 
 ## Installation
 
-Download **`OffSpeak-Setup-<version>.exe`** from the [latest release](https://github.com/applirado/offspeak/releases/latest)
-and run it. It installs OffSpeak for your user account, without admin rights, into
-`%LOCALAPPDATA%\Programs\OffSpeak`, and downloads Python, the packages and the Parakeet voice model
-(about 1 GB). It adds a Start menu entry and, if you like, starts OffSpeak when you sign in.
+Open **PowerShell** (or Terminal) and paste this line:
 
-The installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click
-**More info**, then **Run anyway**.
+```powershell
+powershell -c "irm https://applirado.github.io/offspeak/install.ps1 | iex"
+```
 
-To remove OffSpeak, use **Settings > Apps**. The uninstaller asks whether to keep your settings, history
-and downloaded models.
+It installs OffSpeak for your user account, without admin rights, into `%LOCALAPPDATA%\Programs\OffSpeak`:
+
+1. the source code of the [latest release](https://github.com/applirado/offspeak/releases/latest)
+2. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
+3. OffSpeak's packages, exactly as pinned in `uv.lock`
+4. the Parakeet voice model (about 1 GB), if it is not installed yet
+5. a Start menu entry, an entry in **Settings > Apps**, and autostart when you sign in to Windows
+
+Then it starts OffSpeak. Run the same line again to update. You can read
+[install.ps1](install.ps1) and [setup.ps1](setup.ps1) before you run them; they are short.
+
+To remove OffSpeak, use **Settings > Apps**. Your settings, history and models stay in
+`%LOCALAPPDATA%\Offspeak`; delete that folder too if you no longer need them.
 
 The setup is the only step that uses the internet. After that, OffSpeak works offline.
 
 <details>
-<summary>Install from the source code with setup.cmd</summary>
+<summary>Install from a clone with setup.cmd</summary>
 
-Clone the repository (or download it as a ZIP) and double-click **`setup.cmd`**. It installs, for the
-current user and without admin rights:
-
-1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
-2. OffSpeak's packages, exactly as pinned in `uv.lock`
-3. the Parakeet voice model, if it is not installed yet
-4. a Start menu shortcut, and autostart when you sign in to Windows
-
-Then it starts OffSpeak. Run `setup.cmd` again at any time to update or repair the installation, for
-example after a `git pull` or after moving the folder. Options: `-NoAutostart`, `-NoModel` and
-`-NoLaunch`, for example `setup.cmd -NoAutostart`.
+Clone the repository (or download it as a ZIP) and double-click **`setup.cmd`**. It does the same as
+the line above, but runs OffSpeak from that folder. Run `setup.cmd` again at any time to update or
+repair the installation, for example after a `git pull` or after moving the folder. Options:
+`-NoAutostart`, `-NoModel` and `-NoLaunch`, for example `setup.cmd -NoAutostart`.
 
 </details>
 
