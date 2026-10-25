@@ -1,4 +1,5 @@
 import functools
+import logging
 import queue
 import threading
 import time
@@ -44,6 +45,8 @@ class Overlay:
         self.level_source = level_source
         self.position_source = position_source
         self.root = tk.Tk()
+        # without a console, Tk would print errors in callbacks (buttons, settings) to nowhere
+        self.root.report_callback_exception = lambda *exc: logging.error("Error in the UI", exc_info=exc)
         self.root.withdraw()
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
