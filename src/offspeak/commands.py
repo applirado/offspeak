@@ -44,7 +44,7 @@ DEFAULT_PHRASES: dict[str, dict[str, list[str]]] = {
         "quote": ["quote"], "quote_open": ["open quote"], "quote_close": ["close quote", "unquote"],
         "paren_open": ["open parenthesis", "open bracket"], "paren_close": ["close parenthesis", "close bracket"],
         "hyphen": ["hyphen"], "slash": ["slash"],
-        "newline": ["new line"], "paragraph": ["new paragraph"], "literal": ["literally"],
+        "newline": ["new line", "newline"], "paragraph": ["new paragraph"], "literal": ["literally"],
     },
     "fr": {
         "period": ["point"], "comma": ["virgule"], "colon": ["deux points"],
