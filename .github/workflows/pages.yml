@@ -1,0 +1,35 @@
+name: website
+
+# Publishes website/ to GitHub Pages; enable it once under Settings > Pages > Source: GitHub Actions.
+on:
+  push:
+    branches: [main]
+    paths: ["website/**", "assets/social-preview.png", "install.ps1", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Add the link preview image and the install script
+        # og:image in index.html; install.ps1 for: irm https://applirado.github.io/offspeak/install.ps1 | iex
+        run: cp assets/social-preview.png install.ps1 website/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website
+      - id: deployment
+        uses: actions/deploy-pages@v4

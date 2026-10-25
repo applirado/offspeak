@@ -1,76 +1,26 @@
-import functools
+import logging
 import queue
 import threading
 import time
 import tkinter as tk
 
-from PIL import Image, ImageChops, ImageDraw
-
 from offspeak import winapi
+from offspeak.icons import STATE_COLORS, icon_image, tray_image  # noqa: F401 (re-exported for app.py)
 
-STATE_COLORS = {"ready": "#3e63dd", "recording": "#e5484d", "processing": "#f5a524", "done": "#30a46c",
-                "error": "#e5484d"}
 TRANSPARENT = "#010203"
-ICON_CANVAS = 512  # drawn large, then downsampled for smooth edges
-
-
-def _curve(p0, p1, p2, steps: int = 24) -> list[tuple[float, float]]:
-    """Quadratic Bezier from p0 to p2 with control point p1."""
-    return [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0],
-             (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1])
-            for t in (i / steps for i in range(steps + 1))]
-
-
-@functools.lru_cache(maxsize=32)
-def icon_image(state: str, size: int = 64, tight: bool = False) -> Image.Image:
-    """The Offspeak cockatoo on a circle whose colour shows the recording state.
-
-    tight=True crops to head, crest and beak and fills the whole circle, for the tiny tray icon.
-    """
-    s, white, beak = ICON_CANVAS, "#ffffff", "#1f2933"
-    bird = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(bird)
-    for base_a, tip, base_b in (((168, 175), (95, 40), (215, 140)), ((200, 150), (165, 18), (252, 128)),
-                                ((236, 136), (250, 22), (290, 130))):
-        d.polygon(_curve(base_a, (tip[0] - 10, tip[1] + 60), tip) + _curve(tip, (tip[0] + 40, tip[1] + 70), base_b),
-                  fill=white)
-    d.ellipse((130, 115, 350, 335), fill=white)
-    d.ellipse((140, 255, 380, 640), fill=white)
-    upper = (_curve((312, 160), (405, 150), (432, 245)) + _curve((432, 245), (440, 300), (414, 340))
-             + _curve((414, 340), (406, 290), (378, 268)) + _curve((378, 268), (350, 252), (322, 262)))
-    d.polygon(upper, fill=beak)
-    d.polygon(_curve((326, 262), (372, 262), (384, 292)) + _curve((384, 292), (360, 318), (330, 300)),
-              fill="#3b4752")
-    d.ellipse((238, 168, 296, 226), fill=beak)
-    d.ellipse((259, 179, 276, 196), fill=white)
-
-    margin = 8
-    if tight:
-        bird = bird.crop((70, 0, 470, 400)).resize((s, s), Image.LANCZOS)
-        margin = 2
-    circle = (margin, margin, s - margin, s - margin)
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    ImageDraw.Draw(img).ellipse(circle, fill=STATE_COLORS.get(state, STATE_COLORS["ready"]))
-    mask = Image.new("L", (s, s), 0)
-    ImageDraw.Draw(mask).ellipse(circle, fill=255)
-    bird.putalpha(ImageChops.multiply(bird.getchannel("A"), mask))  # body is cut off at the circle edge
-    img.alpha_composite(bird)
-    return img.resize((size, size), Image.LANCZOS)
-
-
-def tray_image(state: str) -> Image.Image:
-    # high resolution, so Windows downsamples to the 16-32 px tray size itself instead of upscaling
-    return icon_image(state, 256, tight=True)
 
 
 class Overlay:
-    """Small always-on-top pill near the bottom of the screen that never takes focus."""
+    """Small always-on-top pill near the bottom of the screen or the active window that never takes focus."""
 
     W, H = 300, 44
 
-    def __init__(self, level_source):
+    def __init__(self, level_source, position_source=lambda: "screen"):
         self.level_source = level_source
+        self.position_source = position_source
         self.root = tk.Tk()
+        # without a console, Tk would print errors in callbacks (buttons, settings) to nowhere
+        self.root.report_callback_exception = lambda *exc: logging.error("Error in the UI", exc_info=exc)
         self.root.withdraw()
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
@@ -100,8 +50,8 @@ class Overlay:
         if self._hide_job:
             self.root.after_cancel(self._hide_job)
             self._hide_job = None
-        sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
-        self.root.geometry(f"{self.W}x{self.H}+{(sw - self.W) // 2}+{sh - self.H - 90}")
+        x, y = winapi.overlay_position(self.W, self.H, self.position_source())
+        self.root.geometry(f"{self.W}x{self.H}+{x}+{y}")
         self.root.deiconify()
         self.root.attributes("-topmost", True)
         if hide_after_ms:

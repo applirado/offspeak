@@ -35,7 +35,6 @@ class Mode:
     translate_to_english: bool = False
     language_model: str = ""
     prompt: str = ""
-    context_from_clipboard: bool = False
     context_from_selection: bool = True
     context_from_active_app: bool = True
     activation_apps: list[str] = field(default_factory=list)
@@ -59,6 +58,7 @@ class Settings:
     sound_effects: bool = False
     sound_theme: str = "soft"
     sound_volume: float = 0.5
+    overlay_position: str = "screen"  # where the recording indicator appears: "screen" or "window"
     ui_zoom: float = 1.0
     keep_recordings_days: int = 30
     min_recording_ms: int = 400

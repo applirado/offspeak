@@ -7,23 +7,30 @@ from pathlib import Path
 from offspeak.config import DATA_DIR, Config
 
 
-def _not_on_this_platform(feature: str) -> bool:
+def _system_api():
+    """winapi or macapi; None (with a hint) on other systems."""
     if sys.platform == "win32":
-        return False
-    print(f"{feature} is only available on Windows so far. Try 'offspeak listen' to dictate in the terminal.",
-          file=sys.stderr)
-    return True
+        from offspeak import winapi
+
+        return winapi
+    if sys.platform == "darwin":
+        from offspeak import macapi
+
+        return macapi
+    print("This needs Windows or macOS. Try 'offspeak listen' to dictate in the terminal.", file=sys.stderr)
+    return None
 
 
 def cmd_run(_args) -> None:
-    if _not_on_this_platform("The tray app"):
+    if not (api := _system_api()):
         return
-    from offspeak import winapi
-    from offspeak.app import run_app
-
-    if not winapi.acquire_single_instance("Offspeak.SingleInstance"):
-        print("Offspeak is already running.", file=sys.stderr)
+    if not api.acquire_single_instance("Offspeak.SingleInstance"):
+        print("OffSpeak is already running.", file=sys.stderr)
         return
+    if sys.platform == "darwin":
+        from offspeak.macapp import run_app
+    else:
+        from offspeak.app import run_app
     run_app()
 
 
@@ -114,14 +121,18 @@ def cmd_import(_args) -> None:
 
 
 def cmd_autostart(args) -> None:
-    if _not_on_this_platform("Autostart"):
+    if not (api := _system_api()):
         return
-    from offspeak import winapi
-
     if args.state:
-        winapi.set_autostart(args.state == "on")
-    command = winapi.get_autostart()
+        api.set_autostart(args.state == "on")
+    command = api.get_autostart()
     print(f"Autostart is on: {command}" if command else "Autostart is off.")
+
+
+def cmd_create_exe(args) -> None:
+    from offspeak import appexe
+
+    print(appexe.create(Path(args.icon) if args.icon else None))
 
 
 def main() -> None:
@@ -150,8 +161,11 @@ def main() -> None:
     p.add_argument("name")
     p.set_defaults(func=cmd_download)
     sub.add_parser("import-superwhisper", help="import modes and settings from Superwhisper").set_defaults(func=cmd_import)
-    p = sub.add_parser("autostart", help="start Offspeak when you sign in to Windows (on/off; no argument shows the state)")
+    p = sub.add_parser("autostart", help="start OffSpeak when you sign in to Windows (on/off; no argument shows the state)")
     p.add_argument("state", nargs="?", choices=("on", "off"))
     p.set_defaults(func=cmd_autostart)
+    p = sub.add_parser("create-exe", help="create OffSpeak.exe, which runs the tray app under its own name (used by setup)")
+    p.add_argument("--icon", help=".ico file for the executable")
+    p.set_defaults(func=cmd_create_exe)
     args = parser.parse_args()
     (getattr(args, "func", None) or cmd_run)(args)

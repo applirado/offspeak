@@ -42,5 +42,23 @@ jobs:
           say -o hello.aiff "Hello, this is a quick test of the dictation app."
           uv run --frozen offspeak transcribe hello.aiff --json | tee result.json
           grep -qi "quick test" result.json
-      - name: Tray app explains it is not ported yet
-        run: uv run --frozen offspeak run 2>&1 | grep -q "only available on Windows"
+      - name: Install with install.sh
+        run: |
+          git archive --format=tar.gz --prefix=offspeak-test/ -o "$RUNNER_TEMP/offspeak.tar.gz" HEAD
+          OFFSPEAK_SOURCE_TAR="$RUNNER_TEMP/offspeak.tar.gz" bash install.sh
+      - name: Check OffSpeak.app
+        run: |
+          app="$HOME/Applications/OffSpeak.app"
+          plutil -lint "$app/Contents/Info.plist"
+          test -x "$app/Contents/MacOS/OffSpeak"
+          test -s "$app/Contents/Resources/OffSpeak.icns"
+          test -x "$app/Contents/Resources/offspeak/.venv/bin/python"
+          plutil -p ~/Library/LaunchAgents/com.applirado.offspeak.plist | grep -q "OffSpeak.app"
+      - name: The menu bar app starts and keeps running
+        run: |
+          # install.sh opened the app; without Accessibility it waits for permission, but must not crash
+          sleep 20
+          pgrep -f "offspeak run" || { cat ~/Library/Application\ Support/Offspeak/offspeak.log; exit 1; }
+          if grep -q Traceback ~/Library/Application\ Support/Offspeak/offspeak.log; then
+            cat ~/Library/Application\ Support/Offspeak/offspeak.log; exit 1
+          fi

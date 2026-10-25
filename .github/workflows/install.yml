@@ -1,0 +1,54 @@
+name: install
+
+# Runs install.ps1 on a clean Windows with the code of this commit, dictates a spoken sentence with the
+# installed app and removes it again through its Settings > Apps entry.
+on:
+  push:
+    branches: [main]
+    paths: ["install.ps1", "setup.ps1", "pyproject.toml", "uv.lock", "src/**", ".github/workflows/install.yml"]
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install with install.ps1
+        shell: pwsh
+        run: |
+          git archive --format=zip --prefix=offspeak-test/ -o "$env:RUNNER_TEMP\offspeak.zip" HEAD
+          $env:OFFSPEAK_SOURCE_ZIP = "$env:RUNNER_TEMP\offspeak.zip"
+          powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
+          if ($LASTEXITCODE -ne 0) { throw "install.ps1 failed" }
+      - name: Check the installation
+        shell: pwsh
+        run: |
+          $app = "$env:LOCALAPPDATA\Programs\OffSpeak"
+          if ((Get-Item "$app\.venv\OffSpeak\OffSpeak.exe").VersionInfo.FileDescription -ne "OffSpeak") { throw "OffSpeak.exe has no version info" }
+          $run = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run").Offspeak
+          if ($run -notlike "*$app*OffSpeak.exe*") { throw "autostart entry: $run" }
+          if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\OffSpeak.lnk")) { throw "no Start menu entry" }
+          if ((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\OffSpeak").DisplayName -ne "OffSpeak") { throw "no entry in Settings > Apps" }
+          & "$app\.venv\Scripts\offspeak.exe" models
+      - name: Transcribe a spoken sentence
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Speech
+          $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          if (-not $s.GetInstalledVoices().Count) { "no TTS voice on this runner, skipped"; exit 0 }
+          $s.SetOutputToWaveFile("$PWD\hello.wav"); $s.Speak("Hello, this is a quick test of the dictation app."); $s.Dispose()
+          $text = & "$env:LOCALAPPDATA\Programs\OffSpeak\.venv\Scripts\offspeak.exe" transcribe hello.wav
+          "transcript: $text"
+          if ($text -notmatch "quick test") { throw "unexpected transcript" }
+      - name: Uninstall through Settings > Apps and check that nothing is left
+        shell: pwsh
+        run: |
+          $app = "$env:LOCALAPPDATA\Programs\OffSpeak"
+          $uninstall = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\OffSpeak").UninstallString
+          cmd /c $uninstall
+          for ($i = 0; $i -lt 30 -and (Test-Path $app); $i++) { Start-Sleep 2 }  # a separate process deletes the folder
+          if (Test-Path $app) { Get-ChildItem $app -Recurse | Select-Object -First 20 FullName; throw "install folder left behind" }
+          if ((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run").Offspeak) { throw "autostart entry left behind" }
+          if (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\OffSpeak.lnk") { throw "Start menu entry left behind" }
+          if (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\OffSpeak") { throw "Settings > Apps entry left behind" }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Offspeak\models")) { throw "uninstalling must keep the user's data" }

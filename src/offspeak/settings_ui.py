@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 from tkinter import font as tkfont
 from tkinter import messagebox, ttk
 from typing import Callable
@@ -24,6 +25,60 @@ TYPING_VKS = {0x08, 0x09, 0x0D, 0x20, *range(0x30, 0x3A), *range(0x41, 0x5B)}
 
 PAD = 8
 WRAP = 600
+ACCENT = "#0067c0"  # Windows 11 default accent
+TAB_TEXT, TAB_TEXT_DIM = "#1a1a1a", "#6b6b6b"
+HELP_BG = "#e8f1fb"
+DOCS_URL = "https://github.com/applirado/offspeak#readme"
+
+# In-app help per tab, shown under "How it works" and with F1
+HELP = {
+    "vocabulary": (
+        "Enter only the correct spelling. OffSpeak then fixes anything that sounds similar, so you do not "
+        'need to list the wrong versions: "Ulama" and "Olama" become "Ollama", "Data verse" becomes "Dataverse".\n'
+        "• This works for terms with 6 or more letters; shorter ones are too close to ordinary words.\n"
+        "• Whisper models and the AI clean-up also get the list as a spelling hint.\n"
+        "• If a term still comes out wrong, add it under Replacements.\n"
+        "Try it in “Test your rules” below: type a misspelt version under “Heard”."
+    ),
+    "replacements": (
+        "Most names and terms only need the Vocabulary. Use replacements for what it cannot fix:\n"
+        '• short words: "Jason" -> "JSON"\n'
+        '• words that come out very differently: "Kuber Netties" -> "Kubernetes"\n'
+        '• text snippets: "my email" -> "anna@example.com"\n'
+        "Replacements match whole words, ignore upper and lower case, and run after the vocabulary, so "
+        "they always have the last word."
+    ),
+    "commands": (
+        "The voice model already sets periods, commas and question marks by itself. Voice commands are for "
+        "what it does not do: line breaks, paragraphs, brackets and quotes, or a specific character.\n"
+        '• Several phrasings per command, separated by ";", let you say it the way you are used to '
+        '("period; full stop").\n'
+        '• OffSpeak tells the command apart from the word: "I agree, period." ends the sentence, '
+        '"a long period" stays as it is.\n'
+        '• To write a command word itself, say "literally" (in German "wörtlich") before it.\n'
+        "If you mostly dictate plain text, you can switch voice commands off."
+    ),
+    "shortcuts": (
+        "• Push-to-talk records while you hold the keys and inserts the text when you let go.\n"
+        "• Start / stop: press once to start, again to stop; good for longer dictations.\n"
+        "• Cancel stops a recording without inserting anything.\n"
+        "• A mode shortcut records in that mode, for example one with an AI prompt for e-mails.\n"
+        "Letters, digits, Space and Enter need Ctrl, Alt, Shift or Win, or they would trigger while you "
+        "type. New shortcuts work as soon as you save."
+    ),
+    "sound": (
+        "Short sounds tell you that a recording started, stopped or was cancelled, so you do not have to "
+        "watch the screen. Use the buttons to listen to each sound; Soft and Cockatoo are the gentlest.\n"
+        "The recording indicator appears on the screen you are working on. At the bottom of the active "
+        "window, it stays close to your text, for example in a screen recording."
+    ),
+    "startup": (
+        "OffSpeak adds itself to your Windows sign-in programs (no admin rights needed) and starts in the "
+        "tray without a console window. If you move the OffSpeak folder, turn this off and on again, or run "
+        "setup.cmd once more."
+    ),
+}
+OVERLAY_POSITIONS = {"screen": "at the bottom of the screen", "window": "at the bottom of the active window"}
 BASE_SIZE = 700
 BASE_HEIGHT = 760
 ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.7, 2.0, 0.1
@@ -71,10 +126,12 @@ class SettingsWindow:
         self.on_save = on_save
         self.on_zoom = on_zoom or (lambda _zoom: None)
         self.zoom = min(ZOOM_MAX, max(ZOOM_MIN, settings.ui_zoom))
-        self._font_base = {"list": 10, "hint": 9, "result": 10, "title": 11, "close": 11}
+        self._font_base = {"list": 10, "hint": 9, "result": 10, "title": 11, "close": 11, "tab": 10, "link": 9}
         self.fonts = {
             "title": tkfont.Font(family="Segoe UI", size=11, weight="bold"),
             "close": tkfont.Font(family="Segoe UI", size=11),
+            "tab": tkfont.Font(family="Segoe UI Semibold", size=10),
+            "link": tkfont.Font(family="Segoe UI", size=9),
             "list": tkfont.Font(family="Segoe UI", size=10),
             "hint": tkfont.Font(family="Segoe UI", size=9, slant="italic"),
             "result": tkfont.Font(family="Segoe UI", size=10, weight="bold"),
@@ -96,7 +153,9 @@ class SettingsWindow:
         self.dirty = False
 
         self.win = tk.Toplevel(master)
-        self.win.title("Offspeak - Settings")
+        # Windows shows a new toplevel at once; keep it invisible until it is built, or it flashes small, then grows
+        self.win.attributes("-alpha", 0.0)
+        self.win.title("OffSpeak - Settings")
         self._icon = ImageTk.PhotoImage(icon_image("ready", 64), master=self.win)
         self.win.iconphoto(False, self._icon)
         width = min(round(BASE_SIZE * self.zoom), int(self.win.winfo_screenwidth() * 0.95))
@@ -113,25 +172,32 @@ class SettingsWindow:
         self.lang_var = tk.StringVar(value=LANGUAGES.get(language, LANGUAGES["de"]))
 
         self._header()
-        notebook = ttk.Notebook(self.win)
-        notebook.pack(fill="both", expand=True, padx=PAD, pady=(PAD, 0))
+        self._help_toggles: dict[str, Callable[[], None]] = {}  # tab widget path -> show/hide its help
+        self._open_help: Callable[[], None] | None = None  # toggle of the help that is shown
+        notebook = ttk.Notebook(self.win, style="Pages.TNotebook")
         notebook.add(self._vocabulary_tab(notebook), text="Vocabulary")
         notebook.add(self._replacements_tab(notebook), text="Replacements")
         notebook.add(self._commands_tab(notebook), text="Voice commands")
         notebook.add(self._shortcuts_tab(notebook), text="Shortcuts")
-        notebook.add(self._sound_tab(notebook, settings), text="Sound")
+        notebook.add(self._sound_tab(notebook, settings), text="Sound & display")
         notebook.add(self._startup_tab(notebook), text="Startup")
-        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._end_capture())
-        self._preview_section()
+        tab_bar = self._tab_bar(notebook)
+        notebook.enable_traversal()  # Ctrl+Tab / Ctrl+Shift+Tab
+        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._end_capture(), add=True)
 
+        # The buttons and the test area are packed (at the bottom) before the notebook, so a tall page, for
+        # example with its help open, shrinks the page instead of pushing them out of the window.
         buttons = ttk.Frame(self.win)
-        buttons.pack(fill="x", padx=PAD, pady=PAD)
+        buttons.pack(side="bottom", fill="x", padx=PAD, pady=PAD)
         ttk.Button(buttons, text="Close", command=self.close).pack(side="right")
         ttk.Button(buttons, text="Save", command=self.save).pack(side="right", padx=(0, PAD))
         self.status_var = tk.StringVar()
         ttk.Label(buttons, textvariable=self.status_var, foreground="#2e7d32").pack(side="right", padx=(0, PAD))
+        self._preview_section()
+        notebook.pack(fill="both", expand=True, padx=PAD, pady=(PAD, 0))
         self.win.bind("<Escape>", lambda _e: None if self.capturing else self.close())
         self.win.bind("<Control-s>", lambda _e: self.save())
+        self.win.bind("<F1>", lambda _e: self._help_toggles.get(notebook.select(), lambda: None)())
         for seq in ("<Control-plus>", "<Control-equal>", "<Control-KP_Add>"):
             self.win.bind(seq, lambda _e: self._zoom_by(1))
         for seq in ("<Control-minus>", "<Control-KP_Subtract>"):
@@ -143,7 +209,18 @@ class SettingsWindow:
         self._apply_zoom()
         self._refresh()
         self.win.update_idletasks()
+        # all tab headers must fit, also with large fonts or display scaling
+        needed = tab_bar.winfo_reqwidth() + 4 * PAD
+        self.win.minsize(max(560, needed), 480)
+        if width < needed:
+            self.win.geometry(f"{needed}x{height}")
+            self.win.update_idletasks()
         winapi.remove_caption(int(self.win.wm_frame(), 16))
+        # idle callbacks run once the pending resize events are handled, so the final layout is what appears
+        self.win.after_idle(self._reveal)
+
+    def _reveal(self) -> None:
+        self.win.attributes("-alpha", 1.0)
         self.win.lift()
         self.win.focus_force()
 
@@ -155,7 +232,7 @@ class SettingsWindow:
         self._header_icon = ImageTk.PhotoImage(icon_image("ready", 24), master=self.win)
         icon = tk.Label(header, image=self._header_icon, bg=bg)
         icon.pack(side="left", padx=(0, PAD))
-        title = tk.Label(header, text="Offspeak", font=self.fonts["title"], bg=bg)
+        title = tk.Label(header, text="OffSpeak", font=self.fonts["title"], bg=bg)
         title.pack(side="left")
         close = tk.Label(header, text="✕", font=self.fonts["close"], bg=bg, padx=PAD * 2, pady=PAD // 2,
                          cursor="hand2")
@@ -166,6 +243,73 @@ class SettingsWindow:
         for widget in (header, icon, title):  # drag the window by its header
             widget.bind("<ButtonPress-1>", self._start_drag)
             widget.bind("<B1-Motion>", self._drag)
+
+    # -- tabs (the native vista tabs are barely visible on Windows 11) -------
+    def _tab_bar(self, notebook: ttk.Notebook) -> tk.Frame:
+        """Windows 11 style headers: text tabs with an accent bar under the selected one."""
+        style = ttk.Style(self.win)
+        style.layout("Pages.TNotebook.Tab", [])  # the notebook only switches pages; this bar shows the tabs
+        bg = style.lookup("TFrame", "background") or "SystemButtonFace"
+        bar = tk.Frame(self.win, bg=bg)
+        bar.pack(fill="x", padx=PAD * 2, pady=(PAD, 0))
+        self._tabs: list[tuple[tk.Label, tk.Frame]] = []
+        for index, page in enumerate(notebook.tabs()):
+            cell = tk.Frame(bar, bg=bg, cursor="hand2")
+            cell.pack(side="left", padx=(0, PAD * 2))
+            label = tk.Label(cell, text=notebook.tab(page, "text"), font=self.fonts["tab"], bg=bg, padx=2, pady=2)
+            label.pack()
+            line = tk.Frame(cell, height=3, bg=bg)
+            line.pack(fill="x", padx=2)
+            for widget in (cell, label, line):
+                widget.bind("<Button-1>", lambda _e, i=index: notebook.select(i))
+                widget.bind("<Enter>", lambda _e, i=index: self._show_tabs(notebook, hover=i))
+                widget.bind("<Leave>", lambda _e: self._show_tabs(notebook))
+            self._tabs.append((label, line))
+        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._show_tabs(notebook), add=True)
+        self._show_tabs(notebook)
+        return bar
+
+    def _show_tabs(self, notebook: ttk.Notebook, hover: int | None = None) -> None:
+        selected = notebook.index("current")
+        for index, (label, line) in enumerate(self._tabs):
+            label.configure(fg=TAB_TEXT if index in (selected, hover) else TAB_TEXT_DIM)
+            line.configure(bg=ACCENT if index == selected else line.master["bg"])
+
+    # -- in-app help ----------------------------------------------------------
+    def _help(self, tab: ttk.Frame, key: str) -> None:
+        """A "How it works" link that unfolds this tab's help text; F1 does the same."""
+        link = ttk.Label(tab, text="How it works ▸", foreground=ACCENT, cursor="hand2", font=self.fonts["link"])
+        link.pack(anchor="w", pady=(0, PAD))
+        box = tk.Frame(tab, bg=HELP_BG, padx=PAD, pady=PAD)
+        ttk.Label(box, text=HELP[key], wraplength=WRAP - 2 * PAD, justify="left", background=HELP_BG).pack(fill="x")
+        docs = ttk.Label(box, text="Full documentation on GitHub ↗", foreground=ACCENT, background=HELP_BG,
+                         cursor="hand2", font=self.fonts["link"])
+        docs.pack(anchor="w", pady=(PAD // 2, 0))
+        docs.bind("<Button-1>", lambda _e: webbrowser.open(DOCS_URL))
+        grown = [None]  # pixels the window grew for this help while it is shown, None while hidden
+
+        def resize(delta: int) -> None:
+            winapi.grow_window(int(self.win.wm_frame(), 16), delta)
+
+        def toggle() -> None:
+            if grown[0] is None:
+                if self._open_help is not None:  # one help at a time, so the window grows only once
+                    self._open_help()
+                box.pack(after=link, fill="x", pady=(0, PAD))
+                # make room for the help instead of squeezing the page, as far as the screen allows
+                self.win.update_idletasks()
+                limit = int(self.win.winfo_screenheight() * 0.9)
+                grown[0] = max(0, min(box.winfo_reqheight() + PAD, limit - self.win.winfo_height()))
+                resize(grown[0])
+                self._open_help = toggle
+            else:
+                box.pack_forget()
+                resize(-grown[0])
+                grown[0] = self._open_help = None
+            link.configure(text="How it works ▾" if grown[0] is not None else "How it works ▸")
+
+        link.bind("<Button-1>", lambda _e: toggle())
+        self._help_toggles[str(tab)] = toggle
 
     def _start_drag(self, event) -> None:
         self._drag_offset = (event.x_root - self.win.winfo_x(), event.y_root - self.win.winfo_y())
@@ -198,6 +342,8 @@ class SettingsWindow:
             f.configure(size=_scaled(base, self.zoom))
         for key, f in self.fonts.items():
             f.configure(size=_scaled(self._font_base[key], self.zoom))
+        for _label, line in self._tabs:
+            line.configure(height=max(2, round(3 * self.zoom)))
         linespace = tkfont.nametofont("TkDefaultFont", root=self.win).metrics("linespace")
         ttk.Style(self.win).configure("Treeview", rowheight=linespace + 6)
         for widget in _widgets(self.win):
@@ -214,9 +360,10 @@ class SettingsWindow:
     def _vocabulary_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
-            "Names and technical terms Offspeak should spell correctly. Terms with 6 or more letters are "
+            "Names and technical terms OffSpeak should spell correctly. Terms with 6 or more letters are "
             'also fixed when they come out slightly wrong ("Databurse" becomes "Dataverse").'
-        )).pack(fill="x", pady=(0, PAD))
+        )).pack(fill="x", pady=(0, PAD // 2))
+        self._help(tab, "vocabulary")
 
         entry_row = ttk.Frame(tab)
         entry_row.pack(fill="x", pady=(0, PAD))
@@ -249,9 +396,11 @@ class SettingsWindow:
     def _replacements_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
-            "Whole words or phrases that are always replaced, regardless of case. Useful for words that "
-            'keep coming out wrong, or for shortcuts such as "mfg" -> "Mit freundlichen Grüssen".'
-        )).pack(fill="x", pady=(0, PAD))
+            "Words or phrases that are always replaced, regardless of case. Most terms only need the "
+            "Vocabulary; use this for short words, very different spellings and snippets such as "
+            '"my email" -> "anna@example.com".'
+        )).pack(fill="x", pady=(0, PAD // 2))
+        self._help(tab, "replacements")
 
         form = ttk.Frame(tab)
         form.pack(fill="x", pady=(0, PAD))
@@ -316,7 +465,8 @@ class SettingsWindow:
             "Say a command to insert punctuation or a line break; spacing is fixed automatically. "
             "The commands are fixed, how you say them is up to you. Separate several phrasings with "
             '";". The language follows the active mode; modes set to "auto" understand all languages.'
-        )).pack(fill="x", pady=(0, PAD))
+        )).pack(fill="x", pady=(0, PAD // 2))
+        self._help(tab, "commands")
 
         form = ttk.Frame(tab)
         form.pack(fill="x", pady=(0, PAD))
@@ -357,7 +507,7 @@ class SettingsWindow:
 
     def _reset_language(self) -> None:
         lang = self._language()
-        if messagebox.askyesno("Offspeak", f"Reset all {LANGUAGES[lang]} voice commands to their defaults?",
+        if messagebox.askyesno("OffSpeak", f"Reset all {LANGUAGES[lang]} voice commands to their defaults?",
                                parent=self.win):
             self.phrases[lang] = default_phrases(lang)
             self.cmd_phrases_var.set("")
@@ -378,7 +528,8 @@ class SettingsWindow:
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
             'Click "Change" and press the new key combination. Push-to-talk records while you hold the keys; '
             "the other shortcuts start and stop a recording. A mode shortcut records in that mode."
-        )).pack(fill="x", pady=(0, PAD))
+        )).pack(fill="x", pady=(0, PAD // 2))
+        self._help(tab, "shortcuts")
         grid = ttk.Frame(tab)
         grid.pack(fill="x")
         grid.columnconfigure(1, weight=1)
@@ -472,7 +623,8 @@ class SettingsWindow:
         self.sound_theme_var = tk.StringVar(value=sounds.THEMES.get(settings.sound_theme, "Soft"))
         self.sound_volume_var = tk.DoubleVar(value=round(settings.sound_volume * 100))
         ttk.Checkbutton(tab, text="Play a sound when a recording starts, stops or is cancelled",
-                        variable=self.sound_on_var, command=self._sound_changed).pack(anchor="w", pady=(0, PAD))
+                        variable=self.sound_on_var, command=self._sound_changed).pack(anchor="w", pady=(0, PAD // 2))
+        self._help(tab, "sound")
 
         grid = ttk.Frame(tab)
         grid.pack(fill="x")
@@ -499,7 +651,21 @@ class SettingsWindow:
             ttk.Button(buttons, text=event.capitalize(), command=lambda e=event: self._preview_sound(e)).pack(
                 side="left", padx=(0, PAD))
         self._update_volume_label()
+
+        ttk.Separator(tab).pack(fill="x", pady=PAD)
+        self.overlay_position_var = tk.StringVar(value=OVERLAY_POSITIONS.get(settings.overlay_position,
+                                                                             OVERLAY_POSITIONS["screen"]))
+        position_row = ttk.Frame(tab)
+        position_row.pack(fill="x")
+        ttk.Label(position_row, text="Show the recording indicator").pack(side="left")
+        position = ttk.Combobox(position_row, textvariable=self.overlay_position_var,
+                                values=list(OVERLAY_POSITIONS.values()), state="readonly", width=28)
+        position.pack(side="left", padx=PAD)
+        position.bind("<<ComboboxSelected>>", lambda _e: self._sound_changed())
         return tab
+
+    def _overlay_position(self) -> str:
+        return next(k for k, v in OVERLAY_POSITIONS.items() if v == self.overlay_position_var.get())
 
     def _sound_theme(self) -> str:
         return next(k for k, v in sounds.THEMES.items() if v == self.sound_theme_var.get())
@@ -519,19 +685,20 @@ class SettingsWindow:
     def _startup_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
         self.autostart_var = tk.BooleanVar(value=winapi.get_autostart() is not None)
-        ttk.Checkbutton(tab, text="Start Offspeak when I sign in to Windows", variable=self.autostart_var,
+        ttk.Checkbutton(tab, text="Start OffSpeak when I sign in to Windows", variable=self.autostart_var,
                         command=lambda: (setattr(self, "dirty", True), self.status_var.set(""))
                         ).pack(anchor="w", pady=(0, PAD))
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
-            "Offspeak then starts in the tray, without a console window, from the installation it is running "
-            'from now. Turn it off and on again after moving Offspeak. Also available as "offspeak autostart".'
-        )).pack(fill="x")
+            "OffSpeak then starts in the tray, without a console window, from the installation it is running "
+            'from now. Turn it off and on again after moving OffSpeak. Also available as "offspeak autostart".'
+        )).pack(fill="x", pady=(0, PAD // 2))
+        self._help(tab, "startup")
         return tab
 
     # -- test area -----------------------------------------------------------
     def _preview_section(self) -> None:
         frame = ttk.LabelFrame(self.win, text="Test your rules", padding=PAD)
-        frame.pack(fill="x", padx=PAD, pady=(PAD, 0))
+        frame.pack(side="bottom", fill="x", padx=PAD, pady=(PAD, 0))
         frame.columnconfigure(2, weight=1)
         self.speak_button = ttk.Button(frame, text="\U0001f3a4 Speak", width=10, command=self._toggle_recording)
         self.speak_button.grid(row=0, column=0, sticky="w")
@@ -578,7 +745,7 @@ class SettingsWindow:
         if not sample.strip():
             ptt = self.shortcuts.get("push_to_talk_shortcut", "")
             ptt_hint = f" or hold {ptt.replace('+', ' + ')}" if ptt else ""
-            return self._hint(f"Click \U0001f3a4 Speak{ptt_hint} and say a sentence, or type what Offspeak "
+            return self._hint(f"Click \U0001f3a4 Speak{ptt_hint} and say a sentence, or type what OffSpeak "
                               "heard. The result uses your current rules, including unsaved changes.")
         lang = self._language()
         commands = commands_for(lang, {lang: self.phrases[lang]}) if self.enabled_var.get() else []
@@ -620,6 +787,7 @@ class SettingsWindow:
             "sound_effects": self.sound_on_var.get(),
             "sound_theme": self._sound_theme(),
             "sound_volume": round(self.sound_volume_var.get()) / 100,
+            "overlay_position": self._overlay_position(),
             **{key: v for key, v in self.shortcuts.items() if not key.startswith("mode:")},
             "mode_shortcuts": {key.removeprefix("mode:"): v for key, v in self.shortcuts.items()
                                if key.startswith("mode:")},
@@ -630,7 +798,7 @@ class SettingsWindow:
 
     def close(self) -> None:
         if self.dirty:
-            answer = messagebox.askyesnocancel("Offspeak", "Save changes to the settings?", parent=self.win)
+            answer = messagebox.askyesnocancel("OffSpeak", "Save changes to the settings?", parent=self.win)
             if answer is None:
                 return
             if answer:

@@ -65,9 +65,19 @@ def test_replacements_whole_word_case_insensitive():
     ("lokal mit Olama", "lokal mit Ollama"),
     ("alle Alarme und eine Lama-Herde", "alle Alarme und eine Lama-Herde"),
     ("Ich habe unsere Anmeldung geprüft", "Ich habe unsere Anmeldung geprüft"),
+    ("Sign in with entra ID", "Sign in with Entra ID"),
+    ("before the GitHub actions run", "before the GitHub Actions run"),
+    ("Convert the Yaml config", "Convert the YAML config"),
+    ("Install it with NPM.", "Install it with npm."),
+    ("Npm is installed.", "Npm is installed."),
+    ("Run it with Lama.cpp", "Run it with llama.cpp"),
+    ("Use slang chain for that", "Use LangChain for that"),
+    ("Deploy the Fast API service", "Deploy the FastAPI service"),
+    ("Two teams and a team lead", "Two teams and a team lead"),
 ])
 def test_correct_vocabulary(text, expected):
-    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code", "Ollama"]
+    vocab = ["Dataverse", "Azure DevOps", "Teams", "Azure", "Power Platform", "Claude Code", "Ollama", "Entra ID",
+             "GitHub Actions", "YAML", "npm", "llama.cpp", "LangChain", "FastAPI", "API"]
     assert correct_vocabulary(text, vocab) == expected
 
 
@@ -82,11 +92,10 @@ def test_build_messages_includes_context_only_when_present():
     assert "<" not in plain[0]["content"]
     assert plain[1]["content"] == "<transcript>\nhello\n</transcript>"
     rich = build_messages("hello", "Custom.", {"application": {"name": "Code", "title": "x.py"},
-                                               "selection": "sel", "clipboard": ""}, ["Kubernetes"])
+                                               "selection": "sel"}, ["Kubernetes"])
     sys_prompt = rich[0]["content"]
     assert sys_prompt.startswith("Custom.")
     assert "<selected_text>\nsel\n</selected_text>" in sys_prompt
-    assert "<clipboard>" not in sys_prompt
     assert "Kubernetes" in sys_prompt
     assert sys_prompt.index("<selected_text>") < sys_prompt.index("<active_application>")
     # stable instructions form a shared prefix, so llama.cpp can reuse its prompt cache
@@ -110,6 +119,17 @@ def test_matches_app():
     assert matches_app({"name": "slack"}, apps)
     assert not matches_app({"name": "notepad"}, apps)
     assert not matches_app({}, apps)
+
+
+def test_tray_icon_tile_shows_the_state():
+    from offspeak.icons import STATE_COLORS, icon_image
+
+    for state in ("ready", "recording", "processing", "done"):
+        img = icon_image(state, 64)
+        assert img.size == (64, 64)
+        assert img.getpixel((0, 0))[3] == 0  # rounded corner stays transparent
+        rgb = tuple(int(STATE_COLORS[state][i:i + 2], 16) for i in (1, 3, 5))
+        assert all(abs(a - b) <= 2 for a, b in zip(img.getpixel((58, 6))[:3], rgb))  # plain tile, top right
 
 
 def test_audio_helpers():
@@ -140,6 +160,30 @@ def test_history_add_and_search(tmp_path):
     assert h.search("welt")[0]["result"] == "Hallo Welt!"
     assert h.search('quote"s') == []
     assert next(tmp_path.glob("recordings/*/Output.wav")).exists()
+
+
+def test_history_never_stores_the_context(tmp_path):
+    h = History(tmp_path)
+    secret = {"selection": "hunter2", "clipboard": "IBAN DE00", "application": {"name": "Outlook", "title": "Re: Salary"}}
+    h.add(None, {"mode": "Default", "raw_text": "hi", "result": "Hi", "app_name": "Outlook", "context": secret})
+    meta = next(tmp_path.glob("recordings/*/meta.json")).read_text(encoding="utf-8")
+    assert "hunter2" not in meta and "IBAN" not in meta and "Salary" not in meta
+    assert json.loads(meta)["app_name"] == "Outlook"
+
+
+def test_context_reads_the_selection_only_for_a_language_model_and_never_the_clipboard(monkeypatch):
+    from offspeak import context, winapi
+
+    reads = []
+    monkeypatch.setattr(context, "selected_text", lambda: reads.append("selection") or "sel")
+    monkeypatch.setattr(winapi, "get_clipboard_text", lambda: pytest.fail("the clipboard must not be read"))
+    plain = Mode(key="d", name="D", context_from_selection=True)
+    assert context.gather(plain, {"name": "Code", "title": "x.py"}) == {"application": {"name": "Code", "title": "x.py"}}
+    assert reads == []
+    # modes saved by older versions may still carry "context_from_clipboard"; it is ignored
+    rewriting = Mode.from_dict({"key": "m", "name": "M", "language_model": "qwen", "context_from_clipboard": True})
+    assert context.gather(rewriting, {}) == {"selection": "sel"}
+    assert reads == ["selection"]
 
 
 def test_import_superwhisper(tmp_path, monkeypatch):
@@ -181,3 +225,26 @@ def test_netguard_blocks_remote_but_allows_loopback():
     server.listen()
     with server, socket.socket() as s:
         s.connect(server.getsockname())
+
+
+@pytest.mark.skipif(__import__("sys").platform != "win32", reason="Windows only")
+def test_app_exe_has_own_name_and_icon(tmp_path):
+    import ctypes
+    import shutil
+    import sys
+    from pathlib import Path
+
+    from offspeak import appexe
+
+    exe = tmp_path / "OffSpeak.exe"
+    shutil.copyfile(Path(sys.base_prefix) / "pythonw.exe", exe)
+    appexe.brand(exe, Path(__file__).parents[1] / "assets" / "offspeak.ico", "1.2.3")
+    version = ctypes.WinDLL("version")
+    size = version.GetFileVersionInfoSizeW(str(exe), None)
+    data = ctypes.create_string_buffer(size)
+    assert version.GetFileVersionInfoW(str(exe), 0, size, data)
+    value, length = ctypes.c_wchar_p(), ctypes.c_uint()
+    assert version.VerQueryValueW(data, r"\StringFileInfo\040904B0\FileDescription", ctypes.byref(value),
+                                  ctypes.byref(length))
+    assert value.value == "OffSpeak"
+    assert {r[0] for r in appexe._existing(exe, (appexe.RT_GROUP_ICON,))} == {appexe.RT_GROUP_ICON}

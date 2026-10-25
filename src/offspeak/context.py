@@ -37,13 +37,10 @@ def matches_app(app: dict, activation_apps: list[str]) -> bool:
 
 
 def gather(mode, app: dict) -> dict:
+    """Context for the language model. The clipboard is never read: OffSpeak only uses it to paste."""
     ctx: dict = {}
     if mode.context_from_active_app and app:
         ctx["application"] = {"name": app.get("name", ""), "title": app.get("title", "")}
-    if mode.context_from_selection:
+    if mode.language_model and mode.context_from_selection:  # only the language model reads the selection
         ctx["selection"] = selected_text()
-    if mode.context_from_clipboard:
-        from offspeak import winapi
-
-        ctx["clipboard"] = winapi.get_clipboard_text() or ""
     return ctx

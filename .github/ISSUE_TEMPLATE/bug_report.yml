@@ -1,0 +1,39 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OffSpeak version
+      description: Shown next to OffSpeak in Windows Settings > Apps > Installed apps.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows version
+      options: [Windows 11, Windows 10]
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installed with
+      options: [OffSpeak-Setup.exe, setup.cmd, uv by hand]
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        The end of `%LOCALAPPDATA%\Offspeak\offspeak.log`, if it shows an error.
+        Please check it for anything private before you post it.
+      render: text

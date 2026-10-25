@@ -2,13 +2,17 @@
 
 import functools
 import io
+import subprocess
+import sys
+import tempfile
 import threading
 import wave
+from pathlib import Path
 
 import numpy as np
 
 RATE = 44100
-THEMES = {"soft": "Soft", "chime": "Chime", "click": "Click"}
+THEMES = {"soft": "Soft", "cockatoo": "Cockatoo", "chime": "Chime", "click": "Click"}
 EVENTS = ("start", "stop", "cancel")
 
 
@@ -36,7 +40,56 @@ def _click(freq: float) -> np.ndarray:
     return tick
 
 
+def _mallet(freq: float, duration: float = 0.4, decay: float = 0.1) -> np.ndarray:
+    """A soft marimba-like note: the overtones (at marimba ratios) die away faster than the fundamental."""
+    t = np.arange(int(RATE * duration)) / RATE
+    note = sum(a * np.sin(2 * np.pi * freq * ratio * t) * np.exp(-t / (decay / speed))
+               for ratio, a, speed in ((1, 1.0, 1), (3.93, 0.12, 3), (9.2, 0.03, 6)))
+    attack = np.minimum(1, t / 0.003)
+    fade = np.ones_like(t)
+    fade[-int(RATE * 0.02):] = np.linspace(1, 0, int(RATE * 0.02))
+    return note * attack * fade
+
+
+def _chirp(f_start: float, f_peak: float, f_end: float, duration: float) -> np.ndarray:
+    """A short bird call: pitch rises to f_peak and falls to f_end, with a slight warble and a bell-shaped envelope."""
+    x = np.arange(int(RATE * duration)) / (RATE * duration)
+    rise = np.sin(np.pi * np.minimum(x / 0.6, 1) / 2)  # 0 -> 1 over the first 60 %
+    freq = np.where(x < 0.6, f_start + (f_peak - f_start) * rise,
+                    f_peak + (f_end - f_peak) * (x - 0.6) / 0.4)
+    freq = freq * (1 + 0.015 * np.sin(2 * np.pi * 45 * x * duration))
+    phase = 2 * np.pi * np.cumsum(freq) / RATE
+    return (np.sin(phase) + 0.08 * np.sin(2 * phase)) * np.sin(np.pi * x) ** 2
+
+
+def _mix(*parts: tuple[float, np.ndarray]) -> np.ndarray:
+    """Overlay (start_seconds, samples) pairs."""
+    length = max(int(RATE * start) + len(s) for start, s in parts)
+    out = np.zeros(length)
+    for start, s in parts:
+        out[int(RATE * start):int(RATE * start) + len(s)] += s
+    return out
+
+
+def _room(samples: np.ndarray) -> np.ndarray:
+    """A few faint early reflections so the sound is less dry."""
+    out = np.concatenate([samples, _silence(0.05)])
+    for delay, gain in ((0.017, 0.18), (0.029, 0.11), (0.043, 0.06)):
+        d = int(RATE * delay)
+        out[d:d + len(samples)] += gain * samples
+    return out
+
+
 def _samples(theme: str, event: str) -> np.ndarray:
+    if theme == "soft":
+        notes = {"start": ((0, 784.0), (0.07, 1046.5)), "stop": ((0, 1046.5), (0.07, 784.0)),
+                 "cancel": ((0, 523.3), (0.11, 523.3))}[event]
+        return _room(_mix(*((start, _mallet(f)) for start, f in notes)))
+    if theme == "cockatoo":
+        calls = {"start": ((0, (1700, 2500, 2200, 0.07)), (0.1, (1900, 2900, 2600, 0.08))),
+                 "stop": ((0, (2600, 2700, 1700, 0.11)),),
+                 "cancel": ((0, (1300, 1500, 1100, 0.06)), (0.09, (1300, 1500, 1100, 0.06)))}[event]
+        return _room(_mix(*((start, _chirp(*call)) for start, call in calls)))
     if theme == "chime":
         bell = (0.25, 0.08)
         notes = {"start": (1046.5, 1318.5), "stop": (1318.5, 1046.5), "cancel": (659.3, 523.3)}[event]
@@ -44,8 +97,7 @@ def _samples(theme: str, event: str) -> np.ndarray:
     if theme == "click":
         return {"start": _click(2400), "stop": _click(1600),
                 "cancel": np.concatenate([_click(1200), _silence(0.05), _click(1200)])}[event]
-    glide = {"start": [620, 880], "stop": [880, 620], "cancel": [440, 330]}[event]
-    return _tone(glide, 0.12, 0.05, (0.15,))
+    raise ValueError(f"unknown sound theme {theme!r}")
 
 
 @functools.lru_cache(maxsize=64)
@@ -63,10 +115,16 @@ def wav_bytes(theme: str, event: str, volume: float) -> bytes:
 
 def play(theme: str, event: str, volume: float) -> None:
     """Fire and forget; SND_MEMORY cannot be combined with SND_ASYNC, so play on a thread."""
-    import winsound
-
     if volume <= 0:
         return
     data = wav_bytes(theme if theme in THEMES else "soft", event, round(volume, 2))
+    if sys.platform == "darwin":
+        path = Path(tempfile.gettempdir()) / f"offspeak-{theme}-{event}-{round(volume, 2)}.wav"
+        if not path.exists():
+            path.write_bytes(data)
+        subprocess.Popen(["afplay", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return
+    import winsound
+
     threading.Thread(target=winsound.PlaySound, args=(data, winsound.SND_MEMORY | winsound.SND_NODEFAULT),
                      daemon=True).start()

@@ -41,8 +41,8 @@ class App:
         self.worker = ThreadPoolExecutor(max_workers=1)
         self.ctx_worker = ThreadPoolExecutor(max_workers=1)
         self.hotkeys = HotkeyManager(lambda action, phase: self.events.put((action, phase)))
-        self.overlay = Overlay(lambda: self.recorder.level)
-        self.tray = pystray.Icon("Offspeak", tray_image("ready"), "Offspeak", self._menu())
+        self.overlay = Overlay(lambda: self.recorder.level, lambda: self.config.settings.overlay_position)
+        self.tray = pystray.Icon("OffSpeak", tray_image("ready"), "OffSpeak", self._menu())
         self.last_result = ""
         self.settings_window: SettingsWindow | None = None
 
@@ -56,7 +56,7 @@ class App:
         self.worker.submit(self._preload, self.config.active_mode)
         s = self.config.settings
         hint = f"Hold {s.push_to_talk_shortcut} to dictate, or press {s.toggle_shortcut} to start/stop."
-        print(f"Offspeak is running in the system tray (mode: {self.config.active_mode.name}).\n{hint}\n"
+        print(f"OffSpeak is running in the system tray (mode: {self.config.active_mode.name}).\n{hint}\n"
               "Quit via the tray icon menu or Ctrl+C here.", flush=True)
         self.overlay.show("ready", f"Ready - hold {s.push_to_talk_shortcut}", hide_after_ms=3000)
         signal.signal(signal.SIGINT, lambda *_: self._quit())
@@ -132,7 +132,7 @@ class App:
         audio = self.recorder.stop()
         play_sound(self.config.settings, "stop")
         if self.app_info.get("pid") == os.getpid():
-            # Dictating into Offspeak's own settings window: feed the raw text to its test area, don't paste.
+            # Dictating into OffSpeak's own settings window: feed the raw text to its test area, don't paste.
             self._set_state("processing", "Transcribing for test")
             self._transcribe_for_test(audio, self._heard_in_settings)
             return
@@ -166,11 +166,12 @@ class App:
         if not auto_paste:
             winapi.set_clipboard_text(text)  # the user pastes it themselves
             return
-        previous = winapi.snapshot_clipboard()
+        # keep a copy of what the user had copied only to put it back; nothing else reads the clipboard
+        previous = winapi.snapshot_clipboard() if s.restore_clipboard_delay > 0 else None
         ours = winapi.set_clipboard_text(text, transient=True)
         time.sleep(0.05)
         winapi.send_ctrl_v()
-        if previous is not None and ours is not None and s.restore_clipboard_delay > 0:
+        if previous is not None and ours is not None:
             def restore():
                 time.sleep(s.restore_clipboard_delay)
                 # only if nobody copied something new in the meantime
@@ -182,10 +183,19 @@ class App:
         self.state = "ready" if state in ("done", "error") else state
         self.tray.icon = tray_image(state)
         self.overlay.show(state, label, hide_after_ms)
+        if self.state == "ready" and state != "ready" and hide_after_ms:
+            # green "done" and red "error" are only a flash; back to the app icon unless a new dictation began
+            timer = threading.Timer(hide_after_ms / 1000, self._back_to_ready_icon)
+            timer.daemon = True
+            timer.start()
+
+    def _back_to_ready_icon(self) -> None:
+        if self.state == "ready":
+            self.tray.icon = tray_image("ready")
 
     def _notify(self, message: str) -> None:
         try:
-            self.tray.notify(message, "Offspeak")
+            self.tray.notify(message, "OffSpeak")
         except Exception:
             pass
 

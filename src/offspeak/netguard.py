@@ -23,12 +23,12 @@ def install() -> None:
 
     def connect(self, address):
         if self.family in (socket.AF_INET, socket.AF_INET6) and not _is_loopback(address):
-            raise NetworkBlocked(f"Offspeak is offline-only; blocked connection to {address!r}")
+            raise NetworkBlocked(f"OffSpeak is offline-only; blocked connection to {address!r}")
         return original_connect(self, address)
 
     def connect_ex(self, address):
         if self.family in (socket.AF_INET, socket.AF_INET6) and not _is_loopback(address):
-            raise NetworkBlocked(f"Offspeak is offline-only; blocked connection to {address!r}")
+            raise NetworkBlocked(f"OffSpeak is offline-only; blocked connection to {address!r}")
         return original_connect_ex(self, address)
 
     socket.socket.connect = connect

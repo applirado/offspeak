@@ -247,6 +247,15 @@ def remove_caption(hwnd: int) -> None:
         pass  # Windows 10 has square corners
 
 
+def grow_window(hwnd: int, dy: int) -> None:
+    """Change only the outer height; Tk's own geometry is off by the frame of the removed caption."""
+    rect = wintypes.RECT()
+    user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect))
+    SWP_NOMOVE, SWP_NOZORDER, SWP_NOACTIVATE = 0x2, 0x4, 0x10
+    user32.SetWindowPos(hwnd, None, 0, 0, rect.right - rect.left, rect.bottom - rect.top + dy,
+                        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)
+
+
 _instance_mutex = None
 
 
@@ -264,6 +273,10 @@ RUN_VALUE = "Offspeak"
 
 def autostart_command() -> str:
     """Console-less command that starts the tray app from the current installation."""
+    from offspeak.appexe import exe_path
+
+    if exe_path().exists():
+        return subprocess.list2cmdline([str(exe_path()), "-m", "offspeak", "run"])
     scripts = Path(sys.executable).parent
     launcher = scripts / "offspeakw.exe"
     if launcher.exists():
@@ -273,7 +286,7 @@ def autostart_command() -> str:
 
 
 def get_autostart() -> str | None:
-    """The command Windows runs at sign-in, or None if Offspeak does not start automatically."""
+    """The command Windows runs at sign-in, or None if OffSpeak does not start automatically."""
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
             return winreg.QueryValueEx(key, RUN_VALUE)[0]
@@ -290,6 +303,41 @@ def set_autostart(enabled: bool) -> None:
                 winreg.DeleteValue(key, RUN_VALUE)
             except FileNotFoundError:
                 pass
+
+
+class MONITORINFO(ctypes.Structure):
+    _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT), ("rcWork", wintypes.RECT),
+                ("dwFlags", wintypes.DWORD)]
+
+
+user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+user32.MonitorFromWindow.restype = wintypes.HMONITOR
+user32.GetMonitorInfoW.argtypes = [wintypes.HMONITOR, ctypes.POINTER(MONITORINFO)]
+user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+user32.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+user32.IsIconic.argtypes = [wintypes.HWND]
+# the desktop and the taskbar count as "no window"
+_SHELL_CLASSES = {"Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"}
+
+
+def overlay_position(w: int, h: int, where: str) -> tuple[int, int]:
+    """Top-left corner for a w x h overlay: bottom centre of the active window ("window") or of the
+    screen the active window is on ("screen"), kept inside that screen's work area."""
+    hwnd = user32.GetForegroundWindow()
+    info = MONITORINFO(cbSize=ctypes.sizeof(MONITORINFO))
+    user32.GetMonitorInfoW(user32.MonitorFromWindow(hwnd, 1), ctypes.byref(info))  # MONITOR_DEFAULTTOPRIMARY
+    work = info.rcWork
+    area, margin = work, 40
+    if where == "window" and hwnd and not user32.IsIconic(hwnd):
+        name = ctypes.create_unicode_buffer(64)
+        user32.GetClassNameW(hwnd, name, 64)
+        rect = wintypes.RECT()
+        if (name.value not in _SHELL_CLASSES and user32.GetWindowRect(hwnd, ctypes.byref(rect))
+                and rect.bottom - rect.top > 3 * h):
+            area, margin = rect, 24
+    x = (area.left + area.right - w) // 2
+    y = area.bottom - h - margin
+    return (min(max(x, work.left), work.right - w), min(max(y, work.top), work.bottom - h))
 
 
 def enable_dpi_awareness() -> None:

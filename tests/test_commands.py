@@ -31,6 +31,9 @@ DE = commands_for("de", {})
     ("Klammer, auf siehe oben Klammer zu", "(siehe oben)"),
     ("2 Komma 5 Prozent", "2,5 Prozent"),
     ("Anführungszeichen auf A Anführungszeichen zu und Anführungszeichen B Anführungszeichen", '"A" und "B"'),
+    ("Das ist ein guter Punkt Punkt neue Zeile viele Grüße", "Das ist ein guter Punkt.\nViele Grüße"),
+    ("Erledigt Punkt neuer Absatz nächstes Thema", "Erledigt.\n\nNächstes Thema"),
+    ("die Folien Klammer auf neu Klammer zu", "die Folien (neu)"),
 ])
 def test_german_commands(spoken, expected):
     assert apply_voice_commands(spoken, DE) == expected
@@ -48,6 +51,16 @@ def test_english_and_language_selection():
     assert apply_voice_commands("The trial period ends today, period.", en) == "The trial period ends today."
     assert apply_voice_commands("We got a direct quote from the vendor.", en) == "We got a direct quote from the vendor."
     assert apply_voice_commands("It ends after the trial period.", en) == "It ends after the trial period."
+    assert apply_voice_commands("It was a long period period new line best regards", en) == \
+        "It was a long period.\nBest regards"
+    assert apply_voice_commands("send me the slides open parenthesis the new ones close parenthesis question mark",
+                                en) == "send me the slides (the new ones)?"
+    assert apply_voice_commands("Draw a new line here.", en) == "Draw a new line here."
+    # Parakeet often writes the command as one word, and a spoken "comma" as ","
+    assert apply_voice_commands("Hi Tom, Newline, Newline. The migration is done.", en) == \
+        "Hi Tom,\n\nThe migration is done."
+    assert apply_voice_commands("Hi Tom. New paragraph. Thanks.", en) == "Hi Tom\n\nThanks."
+    assert apply_voice_commands("Print the newline character.", en) == "Print the newline character."
 
 
 def test_french_and_italian_nouns():
