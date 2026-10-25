@@ -163,7 +163,7 @@ result", "Transcribe file..." and "Quit".
 | **Replacements** | Words that are always replaced, for example "my email" -> "anna@example.com". |
 | **Voice commands** | How you say each punctuation command, per language (Deutsch, English, Français, Italiano). |
 | **Shortcuts** | Push-to-talk, start/stop, cancel, and one shortcut per mode. |
-| **Sound** | Optional gentle sounds when a recording starts and stops. |
+| **Sound & display** | Optional gentle sounds when a recording starts and stops, and where the recording indicator appears: at the bottom of the screen or of the active window. |
 | **Startup** | Start OffSpeak automatically when you sign in to Windows. |
 
 At the bottom, **Test your rules** shows what your rules make of a sentence. Click **Speak** or hold

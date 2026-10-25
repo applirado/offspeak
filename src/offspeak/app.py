@@ -41,7 +41,7 @@ class App:
         self.worker = ThreadPoolExecutor(max_workers=1)
         self.ctx_worker = ThreadPoolExecutor(max_workers=1)
         self.hotkeys = HotkeyManager(lambda action, phase: self.events.put((action, phase)))
-        self.overlay = Overlay(lambda: self.recorder.level)
+        self.overlay = Overlay(lambda: self.recorder.level, lambda: self.config.settings.overlay_position)
         self.tray = pystray.Icon("OffSpeak", tray_image("ready"), "OffSpeak", self._menu())
         self.last_result = ""
         self.settings_window: SettingsWindow | None = None

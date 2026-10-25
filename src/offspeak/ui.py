@@ -36,12 +36,13 @@ def tray_image(state: str) -> Image.Image:
 
 
 class Overlay:
-    """Small always-on-top pill near the bottom of the screen that never takes focus."""
+    """Small always-on-top pill near the bottom of the screen or the active window that never takes focus."""
 
     W, H = 300, 44
 
-    def __init__(self, level_source):
+    def __init__(self, level_source, position_source=lambda: "screen"):
         self.level_source = level_source
+        self.position_source = position_source
         self.root = tk.Tk()
         self.root.withdraw()
         self.root.overrideredirect(True)
@@ -72,8 +73,8 @@ class Overlay:
         if self._hide_job:
             self.root.after_cancel(self._hide_job)
             self._hide_job = None
-        sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
-        self.root.geometry(f"{self.W}x{self.H}+{(sw - self.W) // 2}+{sh - self.H - 90}")
+        x, y = winapi.overlay_position(self.W, self.H, self.position_source())
+        self.root.geometry(f"{self.W}x{self.H}+{x}+{y}")
         self.root.deiconify()
         self.root.attributes("-topmost", True)
         if hide_after_ms:

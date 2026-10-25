@@ -305,6 +305,41 @@ def set_autostart(enabled: bool) -> None:
                 pass
 
 
+class MONITORINFO(ctypes.Structure):
+    _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT), ("rcWork", wintypes.RECT),
+                ("dwFlags", wintypes.DWORD)]
+
+
+user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+user32.MonitorFromWindow.restype = wintypes.HMONITOR
+user32.GetMonitorInfoW.argtypes = [wintypes.HMONITOR, ctypes.POINTER(MONITORINFO)]
+user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+user32.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+user32.IsIconic.argtypes = [wintypes.HWND]
+# the desktop and the taskbar count as "no window"
+_SHELL_CLASSES = {"Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"}
+
+
+def overlay_position(w: int, h: int, where: str) -> tuple[int, int]:
+    """Top-left corner for a w x h overlay: bottom centre of the active window ("window") or of the
+    screen the active window is on ("screen"), kept inside that screen's work area."""
+    hwnd = user32.GetForegroundWindow()
+    info = MONITORINFO(cbSize=ctypes.sizeof(MONITORINFO))
+    user32.GetMonitorInfoW(user32.MonitorFromWindow(hwnd, 1), ctypes.byref(info))  # MONITOR_DEFAULTTOPRIMARY
+    work = info.rcWork
+    area, margin = work, 40
+    if where == "window" and hwnd and not user32.IsIconic(hwnd):
+        name = ctypes.create_unicode_buffer(64)
+        user32.GetClassNameW(hwnd, name, 64)
+        rect = wintypes.RECT()
+        if (name.value not in _SHELL_CLASSES and user32.GetWindowRect(hwnd, ctypes.byref(rect))
+                and rect.bottom - rect.top > 3 * h):
+            area, margin = rect, 24
+    x = (area.left + area.right - w) // 2
+    y = area.bottom - h - margin
+    return (min(max(x, work.left), work.right - w), min(max(y, work.top), work.bottom - h))
+
+
 def enable_dpi_awareness() -> None:
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)

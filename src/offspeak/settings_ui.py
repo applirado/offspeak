@@ -68,7 +68,9 @@ HELP = {
     ),
     "sound": (
         "Short sounds tell you that a recording started, stopped or was cancelled, so you do not have to "
-        "watch the screen. Use the buttons to listen to each sound; Soft and Cockatoo are the gentlest."
+        "watch the screen. Use the buttons to listen to each sound; Soft and Cockatoo are the gentlest.\n"
+        "The recording indicator appears on the screen you are working on. At the bottom of the active "
+        "window, it stays close to your text, for example in a screen recording."
     ),
     "startup": (
         "OffSpeak adds itself to your Windows sign-in programs (no admin rights needed) and starts in the "
@@ -76,6 +78,7 @@ HELP = {
         "setup.cmd once more."
     ),
 }
+OVERLAY_POSITIONS = {"screen": "at the bottom of the screen", "window": "at the bottom of the active window"}
 BASE_SIZE = 700
 BASE_HEIGHT = 760
 ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 0.7, 2.0, 0.1
@@ -176,7 +179,7 @@ class SettingsWindow:
         notebook.add(self._replacements_tab(notebook), text="Replacements")
         notebook.add(self._commands_tab(notebook), text="Voice commands")
         notebook.add(self._shortcuts_tab(notebook), text="Shortcuts")
-        notebook.add(self._sound_tab(notebook, settings), text="Sound")
+        notebook.add(self._sound_tab(notebook, settings), text="Sound & display")
         notebook.add(self._startup_tab(notebook), text="Startup")
         tab_bar = self._tab_bar(notebook)
         notebook.enable_traversal()  # Ctrl+Tab / Ctrl+Shift+Tab
@@ -648,7 +651,21 @@ class SettingsWindow:
             ttk.Button(buttons, text=event.capitalize(), command=lambda e=event: self._preview_sound(e)).pack(
                 side="left", padx=(0, PAD))
         self._update_volume_label()
+
+        ttk.Separator(tab).pack(fill="x", pady=PAD)
+        self.overlay_position_var = tk.StringVar(value=OVERLAY_POSITIONS.get(settings.overlay_position,
+                                                                             OVERLAY_POSITIONS["screen"]))
+        position_row = ttk.Frame(tab)
+        position_row.pack(fill="x")
+        ttk.Label(position_row, text="Show the recording indicator").pack(side="left")
+        position = ttk.Combobox(position_row, textvariable=self.overlay_position_var,
+                                values=list(OVERLAY_POSITIONS.values()), state="readonly", width=28)
+        position.pack(side="left", padx=PAD)
+        position.bind("<<ComboboxSelected>>", lambda _e: self._sound_changed())
         return tab
+
+    def _overlay_position(self) -> str:
+        return next(k for k, v in OVERLAY_POSITIONS.items() if v == self.overlay_position_var.get())
 
     def _sound_theme(self) -> str:
         return next(k for k, v in sounds.THEMES.items() if v == self.sound_theme_var.get())
@@ -770,6 +787,7 @@ class SettingsWindow:
             "sound_effects": self.sound_on_var.get(),
             "sound_theme": self._sound_theme(),
             "sound_volume": round(self.sound_volume_var.get()) / 100,
+            "overlay_position": self._overlay_position(),
             **{key: v for key, v in self.shortcuts.items() if not key.startswith("mode:")},
             "mode_shortcuts": {key.removeprefix("mode:"): v for key, v in self.shortcuts.items()
                                if key.startswith("mode:")},

@@ -55,6 +55,7 @@ class Settings:
     sound_effects: bool = False
     sound_theme: str = "soft"
     sound_volume: float = 0.5
+    overlay_position: str = "screen"  # where the recording indicator appears: "screen" or "window"
     ui_zoom: float = 1.0
     keep_recordings_days: int = 30
     min_recording_ms: int = 400
