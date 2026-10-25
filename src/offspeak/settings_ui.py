@@ -862,6 +862,9 @@ def run_standalone() -> None:
             NSBundle.mainBundle().infoDictionary()["CFBundleName"] = "OffSpeak"
         except Exception:
             pass
+    config = Config()
+    root = tk.Tk()  # Tk creates the macOS application object itself, so AppKit calls come after it
+    root.withdraw()
     if IS_MAC:  # the window's colours are light; in dark mode macOS would put light text on them
         try:
             import AppKit
@@ -870,9 +873,6 @@ def run_standalone() -> None:
                 AppKit.NSAppearance.appearanceNamed_(AppKit.NSAppearanceNameAqua))
         except Exception:
             pass
-    config = Config()
-    root = tk.Tk()
-    root.withdraw()
     results: queue.Queue = queue.Queue()  # Tk may only be called from its own thread
     pipeline = []
 
