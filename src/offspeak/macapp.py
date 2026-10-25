@@ -14,11 +14,12 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import AppKit
+import numpy as np
 import rumps
 
 from offspeak import context as ctx
 from offspeak import macapi, netguard, sounds
-from offspeak.audio import Recorder
+from offspeak.audio import SAMPLE_RATE, Recorder
 from offspeak.config import Config, Mode
 from offspeak.history import History
 from offspeak.icons import STATE_COLORS, icon_image
@@ -27,6 +28,7 @@ from offspeak.pipeline import Pipeline
 
 log = logging.getLogger("offspeak")
 ICON_PIXELS = 44  # the 22 pt menu bar icon on a Retina display
+LEVEL_BARS = "▁▂▃▄▅▆▇█"
 
 
 def play_sound(settings, event: str) -> None:
@@ -60,7 +62,10 @@ class MacApp(rumps.App):
         self.hotkeys = MacHotkeys(lambda action, phase: self.events.put((action, phase)),
                                   lambda: self.state == "recording")
         self.hotkeys_started = False
+        self.ready_hint = f"Hold {SHORTCUT_LABEL} to dictate"
         self.icon_reset_at = 0.0
+        self.recording_since = 0.0
+        self.notice = ""  # a problem to show at the top of the menu, set from the worker thread
         self.settings_process: subprocess.Popen | None = None
         self.settings_mtime = self._settings_mtime()
 
@@ -101,7 +106,7 @@ class MacApp(rumps.App):
         if macapi.accessibility_trusted(prompt=prompt):
             self.hotkeys.start()
             self.hotkeys_started = True
-            self.status_item.title = f"Hold {SHORTCUT_LABEL} to dictate"
+            self.status_item.title = self.ready_hint
             self.status_item.set_callback(None)
         else:
             self.status_item.title = "⚠︎ Allow OffSpeak under Accessibility…"
@@ -179,6 +184,7 @@ class MacApp(rumps.App):
                           if m.activation_apps and ctx.matches_app(self.app_info, m.activation_apps)),
                          self.config.active_mode)
         self.recorder.start()
+        self.recording_since = time.monotonic()
         play_sound(self.config.settings, "start")
         self._set_state("recording")
         self.context_future = self.ctx_worker.submit(ctx.gather, self.mode, self.app_info)
@@ -193,9 +199,14 @@ class MacApp(rumps.App):
         try:
             context = context_future.result(timeout=2) if context_future else {}
             result = self.pipeline.run(audio, mode, context)
+            peak = float(np.abs(audio).max()) if audio.size else 0.0
+            # macOS records silence, without an error, when the app may not use the microphone
+            self.notice = "⚠︎ Only silence recorded: allow the microphone…" if peak == 0 else ""
             if result is None:
+                log.info("no speech in %.1f s of audio (peak %.4f)", audio.size / SAMPLE_RATE, peak)
                 self._set_state("ready")
                 return
+            log.info("pasting %d characters into %s", len(result["result"]), self.app_info.get("name", "?"))
             self._deliver(result["result"], mode)
             self.history.add(audio, result)
             self.last_result = result["result"]
@@ -229,6 +240,15 @@ class MacApp(rumps.App):
         self.ui.put(state)
 
     def _tick(self, _timer) -> None:
+        if self.state == "recording":  # time and level next to the cockatoo, in place of the Windows pill
+            secs = int(time.monotonic() - self.recording_since)
+            level = LEVEL_BARS[min(len(LEVEL_BARS) - 1, int(self.recorder.level * 12 * len(LEVEL_BARS)))]
+            self.title = f"{secs // 60}:{secs % 60:02d} {level}"
+        elif self.title:
+            self.title = None
+        if self.hotkeys_started and self.status_item.title != (self.notice or self.ready_hint):
+            self.status_item.title = self.notice or self.ready_hint
+            self.status_item.set_callback((lambda _: macapi.open_microphone_settings()) if self.notice else None)
         while not self.ui.empty():
             state = self.ui.get_nowait()
             self.icon = self.icons[state]

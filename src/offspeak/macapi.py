@@ -16,6 +16,7 @@ TRANSIENT_TYPE = "org.nspasteboard.TransientType"
 KEY_V = 9  # kVK_ANSI_V
 LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "com.applirado.offspeak.plist"
 SETTINGS_ACCESSIBILITY = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+SETTINGS_MICROPHONE = "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
 
 
 def _pasteboard():
@@ -87,6 +88,10 @@ def accessibility_trusted(prompt: bool = False) -> bool:
 
 def open_accessibility_settings() -> None:
     subprocess.Popen(["open", SETTINGS_ACCESSIBILITY])
+
+
+def open_microphone_settings() -> None:
+    subprocess.Popen(["open", SETTINGS_MICROPHONE])
 
 
 _instance_lock = None

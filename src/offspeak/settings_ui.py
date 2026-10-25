@@ -862,6 +862,14 @@ def run_standalone() -> None:
             NSBundle.mainBundle().infoDictionary()["CFBundleName"] = "OffSpeak"
         except Exception:
             pass
+    if IS_MAC:  # the window's colours are light; in dark mode macOS would put light text on them
+        try:
+            import AppKit
+
+            AppKit.NSApplication.sharedApplication().setAppearance_(
+                AppKit.NSAppearance.appearanceNamed_(AppKit.NSAppearanceNameAqua))
+        except Exception:
+            pass
     config = Config()
     root = tk.Tk()
     root.withdraw()
