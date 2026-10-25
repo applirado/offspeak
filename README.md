@@ -19,6 +19,10 @@
   <a href="https://github.com/applirado/offspeak/discussions">Discussions</a>
 </p>
 
+<p align="center">
+  <img src="assets/offspeak-animation.gif" width="852" alt="Dictating into Notepad: while a hotkey is held, OffSpeak shows a red recording pill and a red tray icon; on release the text appears: 'Hi Tom,', a blank line, then 'Azure is already set up. Please don't forget to update the Claude.md file.'">
+</p>
+
 **OffSpeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
 let go, and the text appears wherever your cursor is: in mail, chat, an editor or a browser. Speech
 recognition, clean-up and all your settings stay on your computer. There is no account, no cloud
