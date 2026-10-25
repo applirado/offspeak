@@ -85,6 +85,12 @@ def cmd_autostart(args) -> None:
     print(f"Autostart is on: {command}" if command else "Autostart is off.")
 
 
+def cmd_create_exe(args) -> None:
+    from offspeak import appexe
+
+    print(appexe.create(Path(args.icon) if args.icon else None))
+
+
 def main() -> None:
     # pythonw / offspeakw has no console, so these are None; libraries such as pywhispercpp call flush() on them
     for name in ("stdout", "stderr"):
@@ -111,5 +117,8 @@ def main() -> None:
     p = sub.add_parser("autostart", help="start Offspeak when you sign in to Windows (on/off; no argument shows the state)")
     p.add_argument("state", nargs="?", choices=("on", "off"))
     p.set_defaults(func=cmd_autostart)
+    p = sub.add_parser("create-exe", help="create OffSpeak.exe, which runs the tray app under its own name (used by setup)")
+    p.add_argument("--icon", help=".ico file for the executable")
+    p.set_defaults(func=cmd_create_exe)
     args = parser.parse_args()
     (getattr(args, "func", None) or cmd_run)(args)

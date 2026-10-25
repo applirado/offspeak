@@ -68,6 +68,11 @@ $offspeak = Join-Path $scripts "offspeak.exe"
 $offspeakw = Join-Path $scripts "offspeakw.exe"
 if (-not (Test-Path $offspeakw)) { throw "$offspeakw is missing after 'uv sync'." }
 
+# OffSpeak.exe runs the tray app; with plain pythonw.exe Windows lists its tray icon as "Python"
+$icon = @((Join-Path $root "offspeak.ico"), (Join-Path $root "assets\offspeak.ico")) | Where-Object { Test-Path $_ } | Select-Object -First 1
+Invoke-Checked $offspeak create-exe --icon $icon
+$appExe = Join-Path $root ".venv\OffSpeak\OffSpeak.exe"
+
 # -- voice model ---------------------------------------------------------------
 if (-not $NoModel) {
     Step "Checking for the voice model '$defaultVoiceModel'"
@@ -91,8 +96,8 @@ if ($Installer) {
 Step "Creating the Start menu shortcut"
 $shortcutPath = Join-Path ([Environment]::GetFolderPath("Programs")) "Offspeak.lnk"
 $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $offspeakw
-$shortcut.Arguments = "run"
+$shortcut.TargetPath = $appExe
+$shortcut.Arguments = "-m offspeak run"
 $shortcut.WorkingDirectory = $root
 $shortcut.Description = "Offline voice dictation"
 $shortcut.Save()
@@ -104,7 +109,7 @@ Invoke-Checked $offspeak autostart $(if ($NoAutostart) { "off" } else { "on" })
 
 if (-not $NoLaunch) {
     Step "Starting Offspeak"
-    Start-Process $offspeakw -ArgumentList "run"  # does nothing if it is already running
+    Start-Process $appExe -ArgumentList "-m", "offspeak", "run"  # does nothing if it is already running
 }
 
 Write-Host "`nOffspeak is installed." -ForegroundColor Green

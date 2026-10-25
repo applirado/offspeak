@@ -45,14 +45,14 @@ Source: "..\assets\offspeak.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\uv\uv.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\OffSpeak"; Filename: "{app}\.venv\Scripts\offspeakw.exe"; Parameters: "run"; WorkingDir: "{app}"; IconFilename: "{app}\offspeak.ico"; Comment: "Offline voice dictation"
+Name: "{autoprograms}\OffSpeak"; Filename: "{app}\.venv\OffSpeak\OffSpeak.exe"; Parameters: "-m offspeak run"; WorkingDir: "{app}"; IconFilename: "{app}\offspeak.ico"; Comment: "Offline voice dictation"
 
 [Registry]
 ; same value the app's Startup setting and "offspeak autostart" read and write
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Offspeak"; ValueData: """{app}\.venv\Scripts\offspeakw.exe"" run"; Flags: uninsdeletevalue; Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Offspeak"; ValueData: """{app}\.venv\OffSpeak\OffSpeak.exe"" -m offspeak run"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-Filename: "{app}\.venv\Scripts\offspeakw.exe"; Parameters: "run"; Description: "Start OffSpeak now"; Flags: postinstall nowait skipifsilent; Check: AppReady
+Filename: "{app}\.venv\OffSpeak\OffSpeak.exe"; Parameters: "-m offspeak run"; Description: "Start OffSpeak now"; Flags: postinstall nowait skipifsilent; Check: AppReady
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\.venv"
@@ -74,7 +74,7 @@ end;
 
 function AppReady(): Boolean;
 begin
-  Result := FileExists(ExpandConstant('{app}\.venv\Scripts\offspeakw.exe'));
+  Result := FileExists(ExpandConstant('{app}\.venv\OffSpeak\OffSpeak.exe'));
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;

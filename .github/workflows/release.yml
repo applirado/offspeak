@@ -93,13 +93,14 @@ jobs:
         shell: pwsh
         run: |
           $app = "$env:LOCALAPPDATA\Programs\OffSpeak"
-          foreach ($f in ".venv\Scripts\offspeakw.exe", "bin\uv.exe", "unins000.exe", "offspeak.ico") {
+          foreach ($f in ".venv\OffSpeak\OffSpeak.exe", "bin\uv.exe", "unins000.exe", "offspeak.ico") {
             if (-not (Test-Path "$app\$f")) { throw "missing $f" }
           }
           if (-not (Get-ChildItem "$app\python" -Directory)) { throw "Python is not inside the install folder" }
           $run = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run").Offspeak
-          if ($run -notlike "*$app*offspeakw.exe*") { throw "autostart entry: $run" }
+          if ($run -notlike "*$app*OffSpeak.exe*") { throw "autostart entry: $run" }
           if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\OffSpeak.lnk")) { throw "no Start menu entry" }
+          if ((Get-Item "$app\.venv\OffSpeak\OffSpeak.exe").VersionInfo.FileDescription -ne "OffSpeak") { throw "OffSpeak.exe has no version info" }
           & "$app\.venv\Scripts\offspeak.exe" models
       - name: Transcribe a spoken sentence
         shell: pwsh

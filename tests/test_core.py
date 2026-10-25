@@ -225,3 +225,25 @@ def test_netguard_blocks_remote_but_allows_loopback():
     server.listen()
     with server, socket.socket() as s:
         s.connect(server.getsockname())
+
+
+def test_app_exe_has_own_name_and_icon(tmp_path):
+    import ctypes
+    import shutil
+    import sys
+    from pathlib import Path
+
+    from offspeak import appexe
+
+    exe = tmp_path / "OffSpeak.exe"
+    shutil.copyfile(Path(sys.base_prefix) / "pythonw.exe", exe)
+    appexe.brand(exe, Path(__file__).parents[1] / "assets" / "offspeak.ico", "1.2.3")
+    version = ctypes.WinDLL("version")
+    size = version.GetFileVersionInfoSizeW(str(exe), None)
+    data = ctypes.create_string_buffer(size)
+    assert version.GetFileVersionInfoW(str(exe), 0, size, data)
+    value, length = ctypes.c_wchar_p(), ctypes.c_uint()
+    assert version.VerQueryValueW(data, r"\StringFileInfo\040904B0\FileDescription", ctypes.byref(value),
+                                  ctypes.byref(length))
+    assert value.value == "OffSpeak"
+    assert {r[0] for r in appexe._existing(exe, (appexe.RT_GROUP_ICON,))} == {appexe.RT_GROUP_ICON}

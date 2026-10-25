@@ -273,6 +273,10 @@ RUN_VALUE = "Offspeak"
 
 def autostart_command() -> str:
     """Console-less command that starts the tray app from the current installation."""
+    from offspeak.appexe import exe_path
+
+    if exe_path().exists():
+        return subprocess.list2cmdline([str(exe_path()), "-m", "offspeak", "run"])
     scripts = Path(sys.executable).parent
     launcher = scripts / "offspeakw.exe"
     if launcher.exists():
