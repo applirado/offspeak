@@ -230,6 +230,9 @@ def apply_voice_commands(text: str, commands: list[dict]) -> str:
             continue
         if tok["kind"] in STRIP_ASR_BEFORE:
             j = idx - 1
+            # the recogniser often writes a spoken "comma" as "," itself: "Hi Tom, new paragraph"
+            if tok["kind"] == "break" and j >= 0 and out[j]["type"] == "asr" and out[j]["t"] == ",":
+                j -= 1
             while j >= 0 and out[j]["type"] == "asr" and out[j]["t"] in ASR_PUNCT:
                 drop.add(j)
                 j -= 1

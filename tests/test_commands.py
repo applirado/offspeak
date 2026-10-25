@@ -56,9 +56,10 @@ def test_english_and_language_selection():
     assert apply_voice_commands("send me the slides open parenthesis the new ones close parenthesis question mark",
                                 en) == "send me the slides (the new ones)?"
     assert apply_voice_commands("Draw a new line here.", en) == "Draw a new line here."
-    # Parakeet often writes the command as one word
+    # Parakeet often writes the command as one word, and a spoken "comma" as ","
     assert apply_voice_commands("Hi Tom, Newline, Newline. The migration is done.", en) == \
-        "Hi Tom\n\nThe migration is done."
+        "Hi Tom,\n\nThe migration is done."
+    assert apply_voice_commands("Hi Tom. New paragraph. Thanks.", en) == "Hi Tom\n\nThanks."
     assert apply_voice_commands("Print the newline character.", en) == "Print the newline character."
 
 
