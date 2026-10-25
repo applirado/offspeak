@@ -358,7 +358,7 @@ wheels = [
 
 [[package]]
 name = "offspeak"
-version = "0.3.2"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "llama-cpp-python", version = "0.3.30", source = { registry = "https://abetlen.github.io/llama-cpp-python/whl/metal" }, marker = "sys_platform == 'darwin'" },

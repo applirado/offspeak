@@ -297,6 +297,7 @@ section { padding-block: 5rem; }
 .reqs li { list-style: none; }
 .reqs li::before { content: "✓ "; color: var(--state-done); font-weight: 600; }
 .mac { margin-top: 2rem; padding: 1.1rem 1.25rem; border-radius: 1rem; border: 1px dashed var(--line); font-size: var(--step--1); color: var(--muted); max-width: 44rem; }
+.mac code { overflow-wrap: anywhere; }
 .mac strong { color: var(--ink); }
 
 /* footer */
@@ -351,7 +352,7 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
           <a class="btn btn-primary" href="#install">Install for Windows</a>
           <a class="btn" href="https://github.com/applirado/offspeak#readme">Read the docs</a>
         </div>
-        <p class="fine">Free and open source. Windows 10 and 11, no GPU needed.</p>
+        <p class="fine">Free and open source. Windows 10 and 11, no GPU needed. Preview for Macs with Apple Silicon.</p>
       </div>
 
       <div class="stage" aria-label="Try it: a dictation demo">
@@ -486,7 +487,7 @@ powershell -c "irm https://applirado.github.io/offspeak/install.ps1 | iex"</pre>
         <li>About 1 GB of disk space</li>
         <li>Internet only during setup</li>
       </ul>
-      <p class="mac"><strong>On a Mac?</strong> A preview for Apple Silicon is in progress: <code>./setup.sh</code> installs the same engine, and <code>offspeak listen</code> already dictates in the terminal. The menu bar app follows.</p>
+      <p class="mac"><strong>On a Mac?</strong> A preview for Apple Silicon runs in the menu bar: paste <code>curl -fsSL https://applirado.github.io/offspeak/install.sh | bash</code> into Terminal, then hold <kbd>Option</kbd>+<kbd>Space</kbd> in any app. The first time, allow OffSpeak under System Settings › Privacy &amp; Security › Accessibility. <a href="https://github.com/applirado/offspeak#macos-preview">More about the preview</a></p>
     </div>
   </section>
 </main>

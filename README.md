@@ -38,7 +38,7 @@
   else, from letting go to the inserted text, runs in real time.
 </p>
 
-**OffSpeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
+**OffSpeak is voice dictation for Windows (and, as a preview, macOS) that runs entirely on your own machine.** Hold a hotkey, talk,
 let go, and the text appears wherever your cursor is: in mail, chat, an editor or a browser. Speech
 recognition, clean-up and all your settings stay on your computer. There is no account, no cloud
 service and no upload.
@@ -92,7 +92,7 @@ recognition is not allowed.
 
 ## Requirements
 
-- Windows 10 or 11 (64-bit)
+- Windows 10 or 11 (64-bit), or a Mac with Apple Silicon (preview, see [macOS](#macos-preview))
 - About 1 GB of disk space for the Parakeet model
 
 Everything else, including Python, is installed by the setup.
@@ -149,7 +149,7 @@ uv run offspeak autostart on    # optional
 On a Mac with Apple Silicon, open **Terminal** and paste this line:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/applirado/offspeak/macos/install.sh | bash
+curl -fsSL https://applirado.github.io/offspeak/install.sh | bash
 ```
 
 It installs uv, Python 3.12, the packages and the Parakeet model the same way as on Windows, builds a

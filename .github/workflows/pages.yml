@@ -4,7 +4,7 @@ name: website
 on:
   push:
     branches: [main]
-    paths: ["website/**", "assets/social-preview.png", "install.ps1", ".github/workflows/pages.yml"]
+    paths: ["website/**", "assets/social-preview.png", "install.ps1", "install.sh", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -26,8 +26,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - name: Add the link preview image and the install script
-        # og:image in index.html; install.ps1 for: irm https://applirado.github.io/offspeak/install.ps1 | iex
-        run: cp assets/social-preview.png install.ps1 website/
+        # og:image in index.html; install.ps1 and install.sh for the one-line installs
+        run: cp assets/social-preview.png install.ps1 install.sh website/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website
