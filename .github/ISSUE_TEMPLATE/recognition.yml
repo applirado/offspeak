@@ -1,0 +1,42 @@
+name: Word not recognized
+description: A word, name or technical term comes out wrong
+labels: [recognition]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Try the vocabulary first: add the correct spelling in Settings > Vocabulary, and OffSpeak
+        fixes words that sound similar. If that does not help, tell us about it here.
+  - type: input
+    id: said
+    attributes:
+      label: What you said
+      placeholder: "Claude Code"
+    validations:
+      required: true
+  - type: input
+    id: got
+    attributes:
+      label: What OffSpeak wrote
+      placeholder: "Cloud Code"
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      placeholder: "English"
+    validations:
+      required: true
+  - type: dropdown
+    id: vocabulary
+    attributes:
+      label: Is the word in your vocabulary?
+      options: ["Yes", "No"]
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Voice model
+      placeholder: "parakeet-tdt-0.6b-v3"

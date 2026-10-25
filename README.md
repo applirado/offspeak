@@ -1,4 +1,23 @@
-# OffSpeak
+<p align="center">
+  <img src="assets/offspeak.svg" alt="OffSpeak logo: a cockatoo on a yellow tile" width="128" height="128">
+</p>
+
+<h1 align="center">OffSpeak</h1>
+
+<p align="center"><b>Dictate fast, stay local.</b> Offline voice dictation for Windows.</p>
+
+<p align="center">
+  <a href="https://github.com/applirado/offspeak/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/applirado/offspeak?label=download"></a>
+  <a href="https://github.com/applirado/offspeak/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/applirado/offspeak/total"></a>
+  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/github/license/applirado/offspeak"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/applirado/offspeak/releases/latest">Download</a> ·
+  <a href="https://applirado.github.io/offspeak/">Website</a> ·
+  <a href="https://github.com/applirado/offspeak/discussions">Discussions</a>
+</p>
 
 **OffSpeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
 let go, and the text appears wherever your cursor is: in mail, chat, an editor or a browser. Speech
