@@ -210,6 +210,7 @@ result", "Transcribe file..." and "Quit".
 | **Voice commands** | How you say each punctuation command, per language (Deutsch, English, Français, Italiano). |
 | **Shortcuts** | Push-to-talk, start/stop, cancel, and one shortcut per mode. |
 | **Sound & display** | Optional gentle sounds when a recording starts and stops, and where the recording indicator appears: at the bottom of the screen or of the active window. |
+| **Privacy** | Whether OffSpeak keeps the audio of your dictations, for 1, 7 or 30 days, for example to transcribe one again with another model. Off by default: only the text goes into the history. |
 | **Startup** | Start OffSpeak automatically when you sign in to Windows. |
 
 At the bottom, **Test your rules** shows what your rules make of a sentence. Click **Speak** or hold
@@ -305,7 +306,8 @@ Everything is stored under `%LOCALAPPDATA%\Offspeak` (or the folder in `OFFSPEAK
 
 - `settings.json` and `modes\`: your configuration
 - `history.sqlite`: past dictations, searchable
-- `recordings\`: the audio of each dictation; audio older than 30 days is deleted automatically
+- `recordings\`: one folder per dictation with its text; the audio only if you chose to keep it under
+  **Settings > Privacy** (off by default)
 - `models\`: voice and language models
 
 ## Development

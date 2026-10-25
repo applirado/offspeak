@@ -86,6 +86,7 @@ HELP = {
         "setup.cmd once more."
     ),
 }
+KEEP_AUDIO = {0: "off", 1: "for 1 day", 7: "for 7 days", 30: "for 30 days"}
 OVERLAY_POSITIONS = {"screen": "at the bottom of the screen", "window": "at the bottom of the active window"}
 BASE_SIZE = 700
 BASE_HEIGHT = 760
@@ -194,6 +195,7 @@ class SettingsWindow:
         if not IS_MAC:
             notebook.add(shortcuts_tab, text="Shortcuts")
         notebook.add(self._sound_tab(notebook, settings), text="Sound & display")
+        notebook.add(self._privacy_tab(notebook, settings), text="Privacy")
         notebook.add(self._startup_tab(notebook), text="Startup")
         tab_bar = self._tab_bar(notebook)
         notebook.enable_traversal()  # Ctrl+Tab / Ctrl+Shift+Tab
@@ -701,6 +703,31 @@ class SettingsWindow:
         self.dirty = True
         self.status_var.set("")
 
+    # -- privacy -------------------------------------------------------------
+    def _privacy_tab(self, parent, settings: Settings) -> ttk.Frame:
+        tab = ttk.Frame(parent, padding=PAD)
+        self.keep_audio = dict(KEEP_AUDIO)
+        if settings.keep_audio_days not in self.keep_audio:  # for example imported from Superwhisper
+            self.keep_audio[settings.keep_audio_days] = f"for {settings.keep_audio_days} days"
+        self.keep_audio_var = tk.StringVar(value=self.keep_audio[settings.keep_audio_days])
+        row = ttk.Frame(tab)
+        row.pack(fill="x", pady=(0, PAD))
+        ttk.Label(row, text="Keep the audio of my dictations").pack(side="left")
+        box = ttk.Combobox(row, textvariable=self.keep_audio_var, values=list(self.keep_audio.values()),
+                           state="readonly", width=14)
+        box.pack(side="left", padx=PAD)
+        box.bind("<<ComboboxSelected>>", lambda _e: (setattr(self, "dirty", True), self.status_var.set("")))
+        ttk.Label(tab, wraplength=WRAP, justify="left", text=(
+            "Off: OffSpeak keeps no recording of what you said; only the text goes into the history. "
+            "With a period, the recordings stay in the recordings folder on this computer, so you can transcribe "
+            "a dictation again, for example with another model, and are deleted afterwards. Switching to a "
+            "shorter period or off also deletes the recordings kept so far."
+        )).pack(fill="x")
+        return tab
+
+    def _keep_audio_days(self) -> int:
+        return next(days for days, label in self.keep_audio.items() if label == self.keep_audio_var.get())
+
     # -- startup -------------------------------------------------------------
     def _startup_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
@@ -811,6 +838,7 @@ class SettingsWindow:
             "sound_theme": self._sound_theme(),
             "sound_volume": round(self.sound_volume_var.get()) / 100,
             "overlay_position": self._overlay_position(),
+            "keep_audio_days": self._keep_audio_days(),
             **{key: v for key, v in self.shortcuts.items() if not key.startswith("mode:")},
             "mode_shortcuts": {key.removeprefix("mode:"): v for key, v in self.shortcuts.items()
                                if key.startswith("mode:")},

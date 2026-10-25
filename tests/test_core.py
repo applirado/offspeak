@@ -162,6 +162,15 @@ def test_history_add_and_search(tmp_path):
     assert next(tmp_path.glob("recordings/*/Output.wav")).exists()
 
 
+def test_audio_is_not_kept_by_default(tmp_path):
+    h = History(tmp_path)
+    h.add(np.zeros(1600, np.float32), {"mode": "Default", "raw_text": "hi", "result": "Hi"})
+    assert Config(tmp_path).settings.keep_audio_days == 0
+    assert h.cleanup_audio(Config(tmp_path).settings.keep_audio_days) == 1  # also audio kept before
+    assert not list(tmp_path.glob("recordings/*/Output.wav"))
+    assert h.recent()[0]["result"] == "Hi"  # the text stays
+
+
 def test_history_never_stores_the_context(tmp_path):
     h = History(tmp_path)
     secret = {"selection": "hunter2", "clipboard": "IBAN DE00", "application": {"name": "Outlook", "title": "Re: Salary"}}
@@ -218,7 +227,7 @@ def test_import_superwhisper(tmp_path, monkeypatch):
     assert cfg.modes["dictate"].language_model == ""
     assert cfg.settings.replacements == [{"original": "Promz", "with": "Prompts"}]
     assert cfg.settings.vocabulary == ["Dataverse"]
-    assert cfg.settings.keep_recordings_days == 30
+    assert cfg.settings.keep_audio_days == 30
 
 
 def test_netguard_blocks_remote_but_allows_loopback():

@@ -52,7 +52,7 @@ class App:
         self.hotkeys.start()
         threading.Thread(target=self._event_loop, daemon=True).start()
         self.tray.run_detached()
-        self.history.cleanup_audio(self.config.settings.keep_recordings_days)
+        self.history.cleanup_audio(self.config.settings.keep_audio_days)
         self.worker.submit(self._preload, self.config.active_mode)
         s = self.config.settings
         hint = f"Hold {s.push_to_talk_shortcut} to dictate, or press {s.toggle_shortcut} to start/stop."
@@ -152,7 +152,9 @@ class App:
                 self._set_state("ready", "No speech detected", hide_after_ms=1200)
                 return
             self._deliver(result["result"], mode)
-            self.history.add(audio, result)
+            keep = self.config.settings.keep_audio_days
+            self.history.add(audio if keep > 0 else None, result)
+            self.history.cleanup_audio(keep)  # also while OffSpeak runs for weeks
             self.last_result = result["result"]
             self._set_state("done", f"{result['word_count']} words", hide_after_ms=1000)
         except Exception as e:

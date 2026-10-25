@@ -60,7 +60,7 @@ class Settings:
     sound_volume: float = 0.5
     overlay_position: str = "screen"  # where the recording indicator appears: "screen" or "window"
     ui_zoom: float = 1.0
-    keep_recordings_days: int = 30
+    keep_audio_days: int = 0  # 0: the audio of a dictation is not kept; its text stays in the history
     min_recording_ms: int = 400
     threads: int = 0
     llm_context_size: int = 4096

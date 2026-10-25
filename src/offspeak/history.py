@@ -74,10 +74,8 @@ class History:
                 "WHERE recording_fts MATCH ? ORDER BY r.datetime DESC LIMIT ?", (fts_query, limit)).fetchall()
 
     def cleanup_audio(self, keep_days: int) -> int:
-        """Delete audio older than keep_days; transcripts stay in the history."""
-        if keep_days <= 0:
-            return 0
-        cutoff = int((time.time() - keep_days * 86400) * 1000)
+        """Delete audio older than keep_days, or all audio for 0; transcripts stay in the history."""
+        cutoff = int((time.time() - max(0, keep_days) * 86400) * 1000)
         removed = 0
         for wav in self.recordings_dir.glob("*/Output.wav"):
             if wav.parent.name.isdigit() and int(wav.parent.name) < cutoff:
