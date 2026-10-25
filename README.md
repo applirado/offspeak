@@ -34,8 +34,8 @@
 
 <p align="center">
   <b>comma</b> and <b>new line</b> are voice commands, the voice model sets the other punctuation by itself, and the
-  vocabulary turns "Claude MD" into <i>Claude.md</i>. The speaking part is shown at triple speed; from letting go to
-  the inserted text, the demo runs in real time.
+  vocabulary turns "Claude MD" into <i>Claude.md</i>. The middle of the recording (0:02 to 0:08) is cut out; everything
+  else, from letting go to the inserted text, runs in real time.
 </p>
 
 **OffSpeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
