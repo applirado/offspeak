@@ -54,16 +54,17 @@ Like the cockatoo in its logo, OffSpeak repeats what it hears, only more neatly.
 
 ## Why not the dictation that is already built in?
 
-Windows, Office, ChatGPT, Claude and many other apps have a microphone button of their own, and for a
-quick message in that one app it may be all you need. OffSpeak is for when you dictate a lot:
+Office, ChatGPT, Claude and many other apps have a microphone button of their own, and Windows has
+voice typing (Win+H). For a quick message they may be all you need. OffSpeak is for when you dictate
+a lot, and for text that should not leave your PC:
 
-| | Built-in dictation in an app | OffSpeak |
-|---|---|---|
-| Where it works | only in that app | in every app, with one hotkey |
-| Where your voice goes | usually to the provider's servers | nowhere: recognition runs on your PC |
-| Works offline | usually not | yes |
-| Your own terms and names | rarely | vocabulary that also fixes near-misses |
-| Punctuation by voice, modes, history | varies | yes |
+| | Dictation in an app (Claude, ChatGPT, Office) | Windows voice typing (Win+H) | OffSpeak |
+|---|---|---|---|
+| Where it works | only in that app | in every app | in every app |
+| Where your voice goes | to the provider's servers | to Microsoft's servers | nowhere: recognition runs on your PC |
+| Works offline | no | no | yes |
+| Technical terms and names | varies | rarely right | your own vocabulary, which also fixes near-misses |
+| English terms in German text | varies | no: one language at a time | yes: the language is detected for you, and the vocabulary keeps your terms intact |
 
 That makes OffSpeak a good fit for confidential mail, customer data and workplaces where cloud speech
 recognition is not allowed.
