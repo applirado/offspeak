@@ -92,7 +92,7 @@ class MacApp(rumps.App):
         AppKit.NSApplication.sharedApplication().setActivationPolicy_(
             AppKit.NSApplicationActivationPolicyAccessory)
         threading.Thread(target=self._event_loop, daemon=True).start()
-        self.history.cleanup_audio(self.config.settings.keep_recordings_days)
+        self.history.cleanup_audio(self.config.settings.keep_audio_days)
         self.worker.submit(self._preload, self.config.active_mode)
         self._check_permission(None, prompt=True)
         print(f"OffSpeak is running in the menu bar (mode: {self.config.active_mode.name}). "
@@ -208,7 +208,9 @@ class MacApp(rumps.App):
                 return
             log.info("pasting %d characters into %s", len(result["result"]), self.app_info.get("name", "?"))
             self._deliver(result["result"], mode)
-            self.history.add(audio, result)
+            keep = self.config.settings.keep_audio_days
+            self.history.add(audio if keep > 0 else None, result)
+            self.history.cleanup_audio(keep)  # also while OffSpeak runs for weeks
             self.last_result = result["result"]
             self._set_state("done")
         except Exception:
