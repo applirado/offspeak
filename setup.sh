@@ -93,8 +93,12 @@ cat > "$app/Contents/MacOS/OffSpeak" <<EOF
 # Starts OffSpeak from $root. Python runs as a child process, so macOS keeps treating
 # OffSpeak.app as the app that asks for the microphone and for Accessibility.
 export OFFSPEAK_APP="$app"
+log="\$HOME/Library/Application Support/Offspeak/launcher.log"
+mkdir -p "\$(dirname "\$log")"
 cd "$root" || exit 1
-"$bin/python" -m offspeak run
+echo "\$(date '+%Y-%m-%d %H:%M:%S') starting" >> "\$log"
+"$bin/python" -m offspeak run >> "\$log" 2>&1
+echo "\$(date '+%Y-%m-%d %H:%M:%S') exited with \$?" >> "\$log"
 EOF
 chmod +x "$app/Contents/MacOS/OffSpeak"
 "$bin/python" -c "from offspeak.icons import icon_image; icon_image('ready', 1024).save('$app/Contents/Resources/OffSpeak.icns')"

@@ -172,11 +172,16 @@ def test_history_never_stores_the_context(tmp_path):
 
 
 def test_context_reads_the_selection_only_for_a_language_model_and_never_the_clipboard(monkeypatch):
-    from offspeak import context, winapi
+    import sys
+
+    from offspeak import context
 
     reads = []
     monkeypatch.setattr(context, "selected_text", lambda: reads.append("selection") or "sel")
-    monkeypatch.setattr(winapi, "get_clipboard_text", lambda: pytest.fail("the clipboard must not be read"))
+    if sys.platform == "win32":
+        from offspeak import winapi
+
+        monkeypatch.setattr(winapi, "get_clipboard_text", lambda: pytest.fail("the clipboard must not be read"))
     plain = Mode(key="d", name="D", context_from_selection=True)
     assert context.gather(plain, {"name": "Code", "title": "x.py"}) == {"application": {"name": "Code", "title": "x.py"}}
     assert reads == []
