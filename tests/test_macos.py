@@ -61,3 +61,24 @@ def test_autostart_opens_the_app_at_login(tmp_path, monkeypatch):
     assert macapi.get_autostart() == "/usr/bin/open -a /Users/test/Applications/OffSpeak.app"
     macapi.set_autostart(False)
     assert macapi.get_autostart() is None
+
+
+def test_settings_window_opens_and_saves(tmp_path):
+    import tkinter as tk
+
+    from offspeak.config import Config
+    from offspeak.settings_ui import SettingsWindow
+
+    config = Config(tmp_path)
+    root = tk.Tk()
+    root.withdraw()
+    saved = []
+    window = SettingsWindow(root, config.settings, config.modes, "en", on_save=saved.append)
+    root.update()
+    tabs = [label.cget("text") for label, _line in window._tabs]
+    assert "Shortcuts" not in tabs and "Vocabulary" in tabs  # the preview's shortcut is fixed
+    window.vocabulary.append("Dataverse")
+    window.save()
+    assert "Dataverse" in saved[0]["vocabulary"]
+    window.win.destroy()
+    root.destroy()

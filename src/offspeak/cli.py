@@ -129,6 +129,12 @@ def cmd_autostart(args) -> None:
     print(f"Autostart is on: {command}" if command else "Autostart is off.")
 
 
+def cmd_settings(_args) -> None:
+    from offspeak.settings_ui import run_standalone
+
+    run_standalone()
+
+
 def cmd_create_exe(args) -> None:
     from offspeak import appexe
 
@@ -164,6 +170,7 @@ def main() -> None:
     p = sub.add_parser("autostart", help="start OffSpeak when you sign in to Windows (on/off; no argument shows the state)")
     p.add_argument("state", nargs="?", choices=("on", "off"))
     p.set_defaults(func=cmd_autostart)
+    sub.add_parser("settings", help="open the settings window").set_defaults(func=cmd_settings)
     p = sub.add_parser("create-exe", help="create OffSpeak.exe, which runs the tray app under its own name (used by setup)")
     p.add_argument("--icon", help=".ico file for the executable")
     p.set_defaults(func=cmd_create_exe)

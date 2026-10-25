@@ -1,12 +1,14 @@
 """The menu bar app on macOS (preview): hold Option+Space, talk, let go, and the text is pasted into the active app.
 
-Compared to Windows there is no settings window and no recording pill yet: the menu bar icon shows the state
-(yellow ready, red recording, blue transcribing, green done), and the settings are JSON files in the data folder.
+Compared to Windows there is no recording pill yet: the menu bar icon shows the state (yellow ready, red
+recording, blue transcribing, green done). The settings window runs in a process of its own (offspeak settings),
+because AppKit and Tk both need the main thread; the app reloads settings.json whenever it changes.
 """
 
 import logging
 import queue
 import subprocess
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -59,6 +61,8 @@ class MacApp(rumps.App):
                                   lambda: self.state == "recording")
         self.hotkeys_started = False
         self.icon_reset_at = 0.0
+        self.settings_process: subprocess.Popen | None = None
+        self.settings_mtime = self._settings_mtime()
 
         self.status_item = rumps.MenuItem("")
         self.mode_menu = rumps.MenuItem("Mode")
@@ -68,13 +72,14 @@ class MacApp(rumps.App):
             self.mode_menu,
             rumps.MenuItem("Copy last result", callback=lambda _: macapi.set_clipboard_text(self.last_result)),
             None,
-            rumps.MenuItem("Open settings folder", callback=lambda _: subprocess.Popen(["open", str(config.root)])),
-            rumps.MenuItem("Reload settings", callback=lambda _: self._reload()),
+            rumps.MenuItem("Settings…", callback=lambda _: self._open_settings(), key=","),
+            rumps.MenuItem("Open data folder", callback=lambda _: subprocess.Popen(["open", str(config.root)])),
             rumps.MenuItem("Quit OffSpeak", callback=lambda _: rumps.quit_application()),
         ]
         self._fill_mode_menu()
         rumps.Timer(self._tick, 0.05).start()
         rumps.Timer(self._check_permission, 2).start()
+        rumps.Timer(self._check_settings_file, 1).start()
 
     # -- lifecycle -------------------------------------------------------------
     def run(self, **options) -> None:
@@ -122,6 +127,24 @@ class MacApp(rumps.App):
         self.config.set_active_mode(key)
         self._fill_mode_menu()
         self.worker.submit(self._preload, self.config.active_mode)
+
+    def _open_settings(self) -> None:
+        if self.settings_process and self.settings_process.poll() is None:
+            return  # already open
+        self.settings_process = subprocess.Popen([sys.executable, "-m", "offspeak", "settings"])
+
+    def _settings_mtime(self) -> float:
+        try:
+            return self.config.settings_path.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    def _check_settings_file(self, _timer) -> None:
+        """Pick up what the settings window saved, or what the user edited in settings.json."""
+        mtime = self._settings_mtime()
+        if mtime != self.settings_mtime:
+            self.settings_mtime = mtime
+            self._reload()
 
     def _reload(self) -> None:
         self.config.load()

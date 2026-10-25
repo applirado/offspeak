@@ -70,3 +70,10 @@ jobs:
             pid="$(ps -o ppid= -p "$pid" | tr -d ' ')"
           done
           echo "Python does not run under OffSpeak.app"; exit 1
+      - name: The settings window opens in a process of its own
+        run: |
+          cd ~/Library/Application\ Support/Offspeak/app
+          .venv/bin/python -m offspeak settings > settings.out 2>&1 &
+          sleep 8
+          kill -0 $! || { cat settings.out; exit 1; }
+          kill $!

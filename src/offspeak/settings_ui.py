@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 import webbrowser
 from tkinter import font as tkfont
@@ -7,13 +8,20 @@ from typing import Callable
 import numpy as np
 from PIL import ImageTk
 
-from offspeak import sounds, winapi
+from offspeak import sounds
 from offspeak.audio import Recorder
 from offspeak.commands import COMMANDS, LANGUAGES, commands_for, default_phrases, phrases_with_defaults
 from offspeak.config import Mode, Settings
 from offspeak.hotkeys import MODIFIER_VKS, current_modifiers, format_shortcut
 from offspeak.textproc import postprocess
-from offspeak.ui import icon_image
+from offspeak.icons import icon_image
+
+IS_MAC = sys.platform == "darwin"
+if IS_MAC:
+    from offspeak import macapi as system
+else:
+    from offspeak import winapi as system
+FONT = "Helvetica Neue" if IS_MAC else "Segoe UI"
 
 GLOBAL_SHORTCUTS = (
     ("push_to_talk_shortcut", "Push-to-talk (hold)"),
@@ -127,14 +135,17 @@ class SettingsWindow:
         self.on_zoom = on_zoom or (lambda _zoom: None)
         self.zoom = min(ZOOM_MAX, max(ZOOM_MIN, settings.ui_zoom))
         self._font_base = {"list": 10, "hint": 9, "result": 10, "title": 11, "close": 11, "tab": 10, "link": 9}
+        if IS_MAC:  # Tk on macOS counts 72 points per inch, so the same sizes come out smaller than on Windows
+            self._font_base = {key: round(size * 1.3) for key, size in self._font_base.items()}
         self.fonts = {
-            "title": tkfont.Font(family="Segoe UI", size=11, weight="bold"),
-            "close": tkfont.Font(family="Segoe UI", size=11),
-            "tab": tkfont.Font(family="Segoe UI Semibold", size=10),
-            "link": tkfont.Font(family="Segoe UI", size=9),
-            "list": tkfont.Font(family="Segoe UI", size=10),
-            "hint": tkfont.Font(family="Segoe UI", size=9, slant="italic"),
-            "result": tkfont.Font(family="Segoe UI", size=10, weight="bold"),
+            "title": tkfont.Font(family=FONT, size=11, weight="bold"),
+            "close": tkfont.Font(family=FONT, size=11),
+            "tab": tkfont.Font(family=FONT if IS_MAC else "Segoe UI Semibold", size=10,
+                               weight="bold" if IS_MAC else "normal"),
+            "link": tkfont.Font(family=FONT, size=9),
+            "list": tkfont.Font(family=FONT, size=10),
+            "hint": tkfont.Font(family=FONT, size=9, slant="italic"),
+            "result": tkfont.Font(family=FONT, size=10, weight="bold"),
         }
         self._wrap_base: dict[str, int] = {}
         self._column_base: dict[str, int] = {}
@@ -171,14 +182,17 @@ class SettingsWindow:
         self.enabled_var = tk.BooleanVar(value=settings.voice_commands_enabled)
         self.lang_var = tk.StringVar(value=LANGUAGES.get(language, LANGUAGES["de"]))
 
-        self._header()
+        if not IS_MAC:
+            self._header()
         self._help_toggles: dict[str, Callable[[], None]] = {}  # tab widget path -> show/hide its help
         self._open_help: Callable[[], None] | None = None  # toggle of the help that is shown
         notebook = ttk.Notebook(self.win, style="Pages.TNotebook")
         notebook.add(self._vocabulary_tab(notebook), text="Vocabulary")
         notebook.add(self._replacements_tab(notebook), text="Replacements")
         notebook.add(self._commands_tab(notebook), text="Voice commands")
-        notebook.add(self._shortcuts_tab(notebook), text="Shortcuts")
+        shortcuts_tab = self._shortcuts_tab(notebook)
+        if not IS_MAC:
+            notebook.add(shortcuts_tab, text="Shortcuts")
         notebook.add(self._sound_tab(notebook, settings), text="Sound & display")
         notebook.add(self._startup_tab(notebook), text="Startup")
         tab_bar = self._tab_bar(notebook)
@@ -215,7 +229,8 @@ class SettingsWindow:
         if width < needed:
             self.win.geometry(f"{needed}x{height}")
             self.win.update_idletasks()
-        winapi.remove_caption(int(self.win.wm_frame(), 16))
+        if not IS_MAC:
+            system.remove_caption(int(self.win.wm_frame(), 16))
         # idle callbacks run once the pending resize events are handled, so the final layout is what appears
         self.win.after_idle(self._reveal)
 
@@ -289,7 +304,10 @@ class SettingsWindow:
         grown = [None]  # pixels the window grew for this help while it is shown, None while hidden
 
         def resize(delta: int) -> None:
-            winapi.grow_window(int(self.win.wm_frame(), 16), delta)
+            if IS_MAC:
+                self.win.geometry(f"{self.win.winfo_width()}x{self.win.winfo_height() + delta}")
+            else:
+                system.grow_window(int(self.win.wm_frame(), 16), delta)
 
         def toggle() -> None:
             if grown[0] is None:
@@ -652,9 +670,11 @@ class SettingsWindow:
                 side="left", padx=(0, PAD))
         self._update_volume_label()
 
-        ttk.Separator(tab).pack(fill="x", pady=PAD)
         self.overlay_position_var = tk.StringVar(value=OVERLAY_POSITIONS.get(settings.overlay_position,
                                                                              OVERLAY_POSITIONS["screen"]))
+        if IS_MAC:
+            return tab
+        ttk.Separator(tab).pack(fill="x", pady=PAD)
         position_row = ttk.Frame(tab)
         position_row.pack(fill="x")
         ttk.Label(position_row, text="Show the recording indicator").pack(side="left")
@@ -684,15 +704,18 @@ class SettingsWindow:
     # -- startup -------------------------------------------------------------
     def _startup_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
-        self.autostart_var = tk.BooleanVar(value=winapi.get_autostart() is not None)
-        ttk.Checkbutton(tab, text="Start OffSpeak when I sign in to Windows", variable=self.autostart_var,
+        self.autostart_var = tk.BooleanVar(value=system.get_autostart() is not None)
+        sign_in = "log in to your Mac" if IS_MAC else "sign in to Windows"
+        ttk.Checkbutton(tab, text=f"Start OffSpeak when I {sign_in}", variable=self.autostart_var,
                         command=lambda: (setattr(self, "dirty", True), self.status_var.set(""))
                         ).pack(anchor="w", pady=(0, PAD))
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
+            "OffSpeak then opens OffSpeak.app in the menu bar." if IS_MAC else
             "OffSpeak then starts in the tray, without a console window, from the installation it is running "
             'from now. Turn it off and on again after moving OffSpeak. Also available as "offspeak autostart".'
         )).pack(fill="x", pady=(0, PAD // 2))
-        self._help(tab, "startup")
+        if not IS_MAC:
+            self._help(tab, "startup")
         return tab
 
     # -- test area -----------------------------------------------------------
@@ -743,7 +766,7 @@ class SettingsWindow:
     def _update_preview(self) -> None:
         sample = self.sample_var.get()
         if not sample.strip():
-            ptt = self.shortcuts.get("push_to_talk_shortcut", "")
+            ptt = "Option+Space" if IS_MAC else self.shortcuts.get("push_to_talk_shortcut", "")
             ptt_hint = f" or hold {ptt.replace('+', ' + ')}" if ptt else ""
             return self._hint(f"Click \U0001f3a4 Speak{ptt_hint} and say a sentence, or type what OffSpeak "
                               "heard. The result uses your current rules, including unsaved changes.")
@@ -777,8 +800,8 @@ class SettingsWindow:
         self._update_preview()
 
     def save(self) -> None:
-        if self.autostart_var.get() != (winapi.get_autostart() is not None):
-            winapi.set_autostart(self.autostart_var.get())
+        if self.autostart_var.get() != (system.get_autostart() is not None):
+            system.set_autostart(self.autostart_var.get())
         self.on_save({
             "vocabulary": list(self.vocabulary),
             "replacements": [dict(r) for r in self.replacements],
@@ -819,3 +842,80 @@ class SettingsWindow:
             return bool(self.win.winfo_exists())
         except tk.TclError:
             return False
+
+
+def run_standalone() -> None:
+    """The settings window in a process of its own: on macOS the menu bar app's main thread belongs to AppKit,
+    and Tk needs the main thread too. The menu bar app reloads settings.json when this window saves it."""
+    import queue
+    import threading
+
+    from offspeak import netguard
+    from offspeak.audio import SAMPLE_RATE, normalize, trim_silence
+    from offspeak.config import Config
+
+    netguard.install()
+    if IS_MAC:  # the app menu says "OffSpeak" instead of "Python"
+        try:
+            from Foundation import NSBundle
+
+            NSBundle.mainBundle().infoDictionary()["CFBundleName"] = "OffSpeak"
+        except Exception:
+            pass
+    config = Config()
+    root = tk.Tk()
+    root.withdraw()
+    results: queue.Queue = queue.Queue()  # Tk may only be called from its own thread
+    pipeline = []
+
+    def transcribe(audio, done) -> None:
+        """Raw speech-to-text for the test area; the voice model is loaded on the first use."""
+        def job():
+            try:
+                if not pipeline:
+                    from offspeak.pipeline import Pipeline
+
+                    pipeline.append(Pipeline(config.settings))
+                speech = trim_silence(audio)
+                text = (pipeline[0].transcribe(normalize(speech), config.active_mode)
+                        if speech.size >= SAMPLE_RATE // 4 else "")
+                results.put((done, text, None))
+            except Exception as e:
+                results.put((done, None, str(e)))
+
+        threading.Thread(target=job, daemon=True).start()
+
+    def save(changes: dict) -> None:
+        for key, shortcut in changes.pop("mode_shortcuts", {}).items():
+            if key in config.modes and config.modes[key].shortcut != shortcut:
+                config.modes[key].shortcut = shortcut
+                config.save_mode(config.modes[key])
+        for key, value in changes.items():
+            setattr(config.settings, key, value)
+        config.save_settings()
+
+    def zoom(value: float) -> None:
+        config.settings.ui_zoom = value
+        config.save_settings()
+
+    window = SettingsWindow(root, config.settings, config.modes, config.active_mode.language,
+                            on_save=save, transcribe=transcribe, on_zoom=zoom)
+    if IS_MAC:  # started from a menu bar app, the window would otherwise open behind the active app
+        try:
+            import AppKit
+
+            AppKit.NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
+        except Exception:
+            pass
+
+    def poll() -> None:
+        while not results.empty():
+            done, text, error = results.get_nowait()
+            done(text, error)
+        if window.exists():
+            root.after(100, poll)
+        else:
+            root.quit()
+
+    poll()
+    root.mainloop()
