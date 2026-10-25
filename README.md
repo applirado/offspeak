@@ -160,9 +160,10 @@ login and opens it. Run the same line again to update.
 - The first time, turn on OffSpeak under **System Settings > Privacy & Security > Accessibility** (it
   needs that to see the shortcut and to paste), and allow the microphone when macOS asks.
 - The cockatoo in the menu bar shows the state (yellow ready, red recording, blue transcribing, green
-  done). Its menu switches modes and opens the settings folder.
+  done). Its menu switches modes and opens the settings (vocabulary, replacements, voice commands,
+  sounds, autostart).
 
-The preview has no settings window and no recording pill yet, and the shortcut is fixed. The code,
+The preview has no recording pill yet, and the shortcut is fixed. The code,
 settings, modes and models live in `~/Library/Application Support/Offspeak`; if something goes wrong,
 `launcher.log` and `offspeak.log` there say why. To remove OffSpeak, quit it in the menu bar, drag
 `~/Applications/OffSpeak.app` to the Bin, delete `~/Library/LaunchAgents/com.applirado.offspeak.plist`,
