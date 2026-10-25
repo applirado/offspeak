@@ -42,7 +42,7 @@ class App:
         self.ctx_worker = ThreadPoolExecutor(max_workers=1)
         self.hotkeys = HotkeyManager(lambda action, phase: self.events.put((action, phase)))
         self.overlay = Overlay(lambda: self.recorder.level)
-        self.tray = pystray.Icon("Offspeak", tray_image("ready"), "Offspeak", self._menu())
+        self.tray = pystray.Icon("OffSpeak", tray_image("ready"), "OffSpeak", self._menu())
         self.last_result = ""
         self.settings_window: SettingsWindow | None = None
 
@@ -56,7 +56,7 @@ class App:
         self.worker.submit(self._preload, self.config.active_mode)
         s = self.config.settings
         hint = f"Hold {s.push_to_talk_shortcut} to dictate, or press {s.toggle_shortcut} to start/stop."
-        print(f"Offspeak is running in the system tray (mode: {self.config.active_mode.name}).\n{hint}\n"
+        print(f"OffSpeak is running in the system tray (mode: {self.config.active_mode.name}).\n{hint}\n"
               "Quit via the tray icon menu or Ctrl+C here.", flush=True)
         self.overlay.show("ready", f"Ready - hold {s.push_to_talk_shortcut}", hide_after_ms=3000)
         signal.signal(signal.SIGINT, lambda *_: self._quit())
@@ -132,7 +132,7 @@ class App:
         audio = self.recorder.stop()
         play_sound(self.config.settings, "stop")
         if self.app_info.get("pid") == os.getpid():
-            # Dictating into Offspeak's own settings window: feed the raw text to its test area, don't paste.
+            # Dictating into OffSpeak's own settings window: feed the raw text to its test area, don't paste.
             self._set_state("processing", "Transcribing for test")
             self._transcribe_for_test(audio, self._heard_in_settings)
             return
@@ -195,7 +195,7 @@ class App:
 
     def _notify(self, message: str) -> None:
         try:
-            self.tray.notify(message, "Offspeak")
+            self.tray.notify(message, "OffSpeak")
         except Exception:
             pass
 

@@ -12,7 +12,7 @@ def cmd_run(_args) -> None:
     from offspeak.app import run_app
 
     if not winapi.acquire_single_instance("Offspeak.SingleInstance"):
-        print("Offspeak is already running.", file=sys.stderr)
+        print("OffSpeak is already running.", file=sys.stderr)
         return
     run_app()
 
@@ -114,7 +114,7 @@ def main() -> None:
     p.add_argument("name")
     p.set_defaults(func=cmd_download)
     sub.add_parser("import-superwhisper", help="import modes and settings from Superwhisper").set_defaults(func=cmd_import)
-    p = sub.add_parser("autostart", help="start Offspeak when you sign in to Windows (on/off; no argument shows the state)")
+    p = sub.add_parser("autostart", help="start OffSpeak when you sign in to Windows (on/off; no argument shows the state)")
     p.add_argument("state", nargs="?", choices=("on", "off"))
     p.set_defaults(func=cmd_autostart)
     p = sub.add_parser("create-exe", help="create OffSpeak.exe, which runs the tray app under its own name (used by setup)")

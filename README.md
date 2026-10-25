@@ -1,17 +1,17 @@
-# Offspeak
+# OffSpeak
 
-**Offspeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
+**OffSpeak is voice dictation for Windows that runs entirely on your own machine.** Hold a hotkey, talk,
 let go, and the text appears wherever your cursor is: in mail, chat, an editor or a browser. Speech
 recognition, clean-up and all your settings stay on your computer. There is no account, no cloud
 service and no upload.
 
-Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
+Like the cockatoo in its logo, OffSpeak repeats what it hears, only more neatly.
 
 ---
 
 ## Highlights
 
-- **Write faster than you ever have.** Dictating with Offspeak reaches about 120 words per minute
+- **Write faster than you ever have.** Dictating with OffSpeak reaches about 120 words per minute
   from key press to inserted text (measured over 115 real dictations), two to three times the usual
   typing speed. Long prompts for an AI assistant take seconds instead of minutes.
 - **Fast on an ordinary laptop CPU.** With NVIDIA Parakeet, a typical sentence is transcribed in
@@ -23,9 +23,9 @@ Like the cockatoo in its logo, Offspeak repeats what it hears, only more neatly.
 - **Gets your jargon right.** Add terms like *Dataverse* or *Claude Code* to the vocabulary, and
   near-misses such as "Databurse" or "Cloud Code" are corrected automatically.
 - **Voice commands.** Say "comma", "new line" or "quote" (in German "Komma", "neue Zeile",
-  "Anführungszeichen") to insert punctuation and line breaks. Offspeak tells the command "period"
+  "Anführungszeichen") to insert punctuation and line breaks. OffSpeak tells the command "period"
   apart from the noun in "a long period".
-- **Leaves your clipboard alone.** Offspeak uses the clipboard only to paste, then puts back what you
+- **Leaves your clipboard alone.** OffSpeak uses the clipboard only to paste, then puts back what you
   had copied: images, rich text and files included. It never reads the clipboard for anything else,
   and dictated text stays out of the Win+V clipboard history.
 - **Optional AI clean-up.** A mode can pass the text through a local language model (any GGUF file
@@ -41,17 +41,17 @@ Everything else, including Python, is installed by the setup.
 ## Installation
 
 Download **`OffSpeak-Setup-<version>.exe`** from the [latest release](https://github.com/applirado/offspeak/releases/latest)
-and run it. It installs Offspeak for your user account, without admin rights, into
+and run it. It installs OffSpeak for your user account, without admin rights, into
 `%LOCALAPPDATA%\Programs\OffSpeak`, and downloads Python, the packages and the Parakeet voice model
-(about 1 GB). It adds a Start menu entry and, if you like, starts Offspeak when you sign in.
+(about 1 GB). It adds a Start menu entry and, if you like, starts OffSpeak when you sign in.
 
 The installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click
 **More info**, then **Run anyway**.
 
-To remove Offspeak, use **Settings > Apps**. The uninstaller asks whether to keep your settings, history
+To remove OffSpeak, use **Settings > Apps**. The uninstaller asks whether to keep your settings, history
 and downloaded models.
 
-The setup is the only step that uses the internet. After that, Offspeak works offline.
+The setup is the only step that uses the internet. After that, OffSpeak works offline.
 
 <details>
 <summary>Install from the source code with setup.cmd</summary>
@@ -60,11 +60,11 @@ Clone the repository (or download it as a ZIP) and double-click **`setup.cmd`**.
 current user and without admin rights:
 
 1. [uv](https://docs.astral.sh/uv/), if it is missing, which in turn installs Python 3.12
-2. Offspeak's packages, exactly as pinned in `uv.lock`
+2. OffSpeak's packages, exactly as pinned in `uv.lock`
 3. the Parakeet voice model, if it is not installed yet
 4. a Start menu shortcut, and autostart when you sign in to Windows
 
-Then it starts Offspeak. Run `setup.cmd` again at any time to update or repair the installation, for
+Then it starts OffSpeak. Run `setup.cmd` again at any time to update or repair the installation, for
 example after a `git pull` or after moving the folder. Options: `-NoAutostart`, `-NoModel` and
 `-NoLaunch`, for example `setup.cmd -NoAutostart`.
 
@@ -85,14 +85,14 @@ uv run offspeak autostart on    # optional
 
 ## Getting started
 
-Start Offspeak from the Start menu, or from the command line:
+Start OffSpeak from the Start menu, or from the command line:
 
 ```powershell
 uv run offspeak        # with a console window
 uv run offspeakw       # without a console window
 ```
 
-Offspeak sits in the system tray as its cockatoo icon. The colour of the tile behind the bird shows
+OffSpeak sits in the system tray as its cockatoo icon. The colour of the tile behind the bird shows
 what it is doing:
 
 | Colour | State |
@@ -124,10 +124,10 @@ result", "Transcribe file..." and "Quit".
 | **Voice commands** | How you say each punctuation command, per language (Deutsch, English, Français, Italiano). |
 | **Shortcuts** | Push-to-talk, start/stop, cancel, and one shortcut per mode. |
 | **Sound** | Optional gentle sounds when a recording starts and stops. |
-| **Startup** | Start Offspeak automatically when you sign in to Windows. |
+| **Startup** | Start OffSpeak automatically when you sign in to Windows. |
 
 At the bottom, **Test your rules** shows what your rules make of a sentence. Click **Speak** or hold
-your push-to-talk shortcut, and Offspeak puts the raw transcript into the test field instead of
+your push-to-talk shortcut, and OffSpeak puts the raw transcript into the test field instead of
 pasting it. **Ctrl+Plus**, **Ctrl+Minus** and **Ctrl+mouse wheel** zoom the window.
 
 Each tab has a **How it works** link (or press **F1**) that explains it with examples.
@@ -135,7 +135,7 @@ Each tab has a **How it works** link (or press **F1**) that explains it with exa
 ### Vocabulary or replacements?
 
 For names and technical terms, the **Vocabulary** is usually all you need. Enter only the correct
-spelling; Offspeak fixes whatever sounds similar, so "Ulama" and "Olama" become "Ollama" without listing
+spelling; OffSpeak fixes whatever sounds similar, so "Ulama" and "Olama" become "Ollama" without listing
 those variants. This works for terms with 6 or more letters.
 
 Use **Replacements** for what the vocabulary cannot fix: short words ("Jason" -> "JSON"), words that
@@ -236,13 +236,13 @@ other servers.
 
 ## Thanks
 
-Offspeak's speed comes from **NVIDIA Parakeet TDT 0.6B v3**. It transcribes a typical sentence in a
+OffSpeak's speed comes from **NVIDIA Parakeet TDT 0.6B v3**. It transcribes a typical sentence in a
 third of a second on an ordinary laptop CPU, sets punctuation by itself and understands 25 European
 languages. Switching from whisper.cpp to Parakeet made dictation more than twice as fast end to end.
 Thank you to the NVIDIA NeMo team for releasing it openly
 ([model card](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), CC BY 4.0).
 
-Offspeak also builds on [onnx-asr](https://github.com/istupakov/onnx-asr), which runs Parakeet with
+OffSpeak also builds on [onnx-asr](https://github.com/istupakov/onnx-asr), which runs Parakeet with
 [ONNX Runtime](https://onnxruntime.ai), on [whisper.cpp](https://github.com/ggml-org/whisper.cpp) and
 on [llama.cpp](https://github.com/ggml-org/llama.cpp).
 

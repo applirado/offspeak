@@ -37,7 +37,7 @@ def matches_app(app: dict, activation_apps: list[str]) -> bool:
 
 
 def gather(mode, app: dict) -> dict:
-    """Context for the language model. The clipboard is never read: Offspeak only uses it to paste."""
+    """Context for the language model. The clipboard is never read: OffSpeak only uses it to paste."""
     ctx: dict = {}
     if mode.context_from_active_app and app:
         ctx["application"] = {"name": app.get("name", ""), "title": app.get("title", "")}

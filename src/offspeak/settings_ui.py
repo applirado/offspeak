@@ -33,7 +33,7 @@ DOCS_URL = "https://github.com/applirado/offspeak#readme"
 # In-app help per tab, shown under "How it works" and with F1
 HELP = {
     "vocabulary": (
-        "Enter only the correct spelling. Offspeak then fixes anything that sounds similar, so you do not "
+        "Enter only the correct spelling. OffSpeak then fixes anything that sounds similar, so you do not "
         'need to list the wrong versions: "Ulama" and "Olama" become "Ollama", "Data verse" becomes "Dataverse".\n'
         "• This works for terms with 6 or more letters; shorter ones are too close to ordinary words.\n"
         "• Whisper models and the AI clean-up also get the list as a spelling hint.\n"
@@ -53,7 +53,7 @@ HELP = {
         "what it does not do: line breaks, paragraphs, brackets and quotes, or a specific character.\n"
         '• Several phrasings per command, separated by ";", let you say it the way you are used to '
         '("period; full stop").\n'
-        '• Offspeak tells the command apart from the word: "I agree, period." ends the sentence, '
+        '• OffSpeak tells the command apart from the word: "I agree, period." ends the sentence, '
         '"a long period" stays as it is.\n'
         '• To write a command word itself, say "literally" (in German "wörtlich") before it.\n'
         "If you mostly dictate plain text, you can switch voice commands off."
@@ -71,8 +71,8 @@ HELP = {
         "watch the screen. Use the buttons to listen to each sound; Soft and Cockatoo are the gentlest."
     ),
     "startup": (
-        "Offspeak adds itself to your Windows sign-in programs (no admin rights needed) and starts in the "
-        "tray without a console window. If you move the Offspeak folder, turn this off and on again, or run "
+        "OffSpeak adds itself to your Windows sign-in programs (no admin rights needed) and starts in the "
+        "tray without a console window. If you move the OffSpeak folder, turn this off and on again, or run "
         "setup.cmd once more."
     ),
 }
@@ -152,7 +152,7 @@ class SettingsWindow:
         self.win = tk.Toplevel(master)
         # Windows shows a new toplevel at once; keep it invisible until it is built, or it flashes small, then grows
         self.win.attributes("-alpha", 0.0)
-        self.win.title("Offspeak - Settings")
+        self.win.title("OffSpeak - Settings")
         self._icon = ImageTk.PhotoImage(icon_image("ready", 64), master=self.win)
         self.win.iconphoto(False, self._icon)
         width = min(round(BASE_SIZE * self.zoom), int(self.win.winfo_screenwidth() * 0.95))
@@ -229,7 +229,7 @@ class SettingsWindow:
         self._header_icon = ImageTk.PhotoImage(icon_image("ready", 24), master=self.win)
         icon = tk.Label(header, image=self._header_icon, bg=bg)
         icon.pack(side="left", padx=(0, PAD))
-        title = tk.Label(header, text="Offspeak", font=self.fonts["title"], bg=bg)
+        title = tk.Label(header, text="OffSpeak", font=self.fonts["title"], bg=bg)
         title.pack(side="left")
         close = tk.Label(header, text="✕", font=self.fonts["close"], bg=bg, padx=PAD * 2, pady=PAD // 2,
                          cursor="hand2")
@@ -357,7 +357,7 @@ class SettingsWindow:
     def _vocabulary_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
-            "Names and technical terms Offspeak should spell correctly. Terms with 6 or more letters are "
+            "Names and technical terms OffSpeak should spell correctly. Terms with 6 or more letters are "
             'also fixed when they come out slightly wrong ("Databurse" becomes "Dataverse").'
         )).pack(fill="x", pady=(0, PAD // 2))
         self._help(tab, "vocabulary")
@@ -504,7 +504,7 @@ class SettingsWindow:
 
     def _reset_language(self) -> None:
         lang = self._language()
-        if messagebox.askyesno("Offspeak", f"Reset all {LANGUAGES[lang]} voice commands to their defaults?",
+        if messagebox.askyesno("OffSpeak", f"Reset all {LANGUAGES[lang]} voice commands to their defaults?",
                                parent=self.win):
             self.phrases[lang] = default_phrases(lang)
             self.cmd_phrases_var.set("")
@@ -668,12 +668,12 @@ class SettingsWindow:
     def _startup_tab(self, parent) -> ttk.Frame:
         tab = ttk.Frame(parent, padding=PAD)
         self.autostart_var = tk.BooleanVar(value=winapi.get_autostart() is not None)
-        ttk.Checkbutton(tab, text="Start Offspeak when I sign in to Windows", variable=self.autostart_var,
+        ttk.Checkbutton(tab, text="Start OffSpeak when I sign in to Windows", variable=self.autostart_var,
                         command=lambda: (setattr(self, "dirty", True), self.status_var.set(""))
                         ).pack(anchor="w", pady=(0, PAD))
         ttk.Label(tab, wraplength=WRAP, justify="left", text=(
-            "Offspeak then starts in the tray, without a console window, from the installation it is running "
-            'from now. Turn it off and on again after moving Offspeak. Also available as "offspeak autostart".'
+            "OffSpeak then starts in the tray, without a console window, from the installation it is running "
+            'from now. Turn it off and on again after moving OffSpeak. Also available as "offspeak autostart".'
         )).pack(fill="x", pady=(0, PAD // 2))
         self._help(tab, "startup")
         return tab
@@ -728,7 +728,7 @@ class SettingsWindow:
         if not sample.strip():
             ptt = self.shortcuts.get("push_to_talk_shortcut", "")
             ptt_hint = f" or hold {ptt.replace('+', ' + ')}" if ptt else ""
-            return self._hint(f"Click \U0001f3a4 Speak{ptt_hint} and say a sentence, or type what Offspeak "
+            return self._hint(f"Click \U0001f3a4 Speak{ptt_hint} and say a sentence, or type what OffSpeak "
                               "heard. The result uses your current rules, including unsaved changes.")
         lang = self._language()
         commands = commands_for(lang, {lang: self.phrases[lang]}) if self.enabled_var.get() else []
@@ -780,7 +780,7 @@ class SettingsWindow:
 
     def close(self) -> None:
         if self.dirty:
-            answer = messagebox.askyesnocancel("Offspeak", "Save changes to the settings?", parent=self.win)
+            answer = messagebox.askyesnocancel("OffSpeak", "Save changes to the settings?", parent=self.win)
             if answer is None:
                 return
             if answer:

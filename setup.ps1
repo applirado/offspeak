@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-    Installs Offspeak for the current user: uv, Python 3.12, all packages, a voice model,
+    Installs OffSpeak for the current user: uv, Python 3.12, all packages, a voice model,
     a Start menu shortcut, and autostart at sign-in. Safe to run again to update or repair.
 .PARAMETER NoAutostart
-    Do not start Offspeak automatically when you sign in to Windows.
+    Do not start OffSpeak automatically when you sign in to Windows.
 .PARAMETER NoModel
     Do not download the Parakeet voice model, even if it is not installed yet.
 .PARAMETER NoLaunch
-    Do not start Offspeak when the setup is done.
+    Do not start OffSpeak when the setup is done.
 .PARAMETER Installer
     Used by OffSpeak-Setup.exe: use the bundled uv, keep Python inside this folder, and leave the
     Start menu shortcut, autostart and launch to the installer.
@@ -56,7 +56,7 @@ if (-not $uv) {
 Invoke-Checked $uv --version
 
 # -- Python 3.12 and packages --------------------------------------------------
-Step "Installing Python 3.12 and Offspeak's packages (this can take a few minutes the first time)"
+Step "Installing Python 3.12 and OffSpeak's packages (this can take a few minutes the first time)"
 Push-Location $root
 try {
     Invoke-Checked $uv sync --frozen --no-dev
@@ -88,13 +88,14 @@ if (-not $NoModel) {
 }
 
 if ($Installer) {
-    Write-Host "`nOffspeak is installed." -ForegroundColor Green
-    exit 0  # the installer creates the shortcut and the autostart entry and starts Offspeak itself
+    Write-Host "`nOffSpeak is installed." -ForegroundColor Green
+    exit 0  # the installer creates the shortcut and the autostart entry and starts OffSpeak itself
 }
 
 # -- Start menu shortcut -------------------------------------------------------
 Step "Creating the Start menu shortcut"
-$shortcutPath = Join-Path ([Environment]::GetFolderPath("Programs")) "Offspeak.lnk"
+$shortcutPath = Join-Path ([Environment]::GetFolderPath("Programs")) "OffSpeak.lnk"
+Remove-Item $shortcutPath -ErrorAction SilentlyContinue  # file names ignore case, so this also renames "Offspeak.lnk"
 $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $appExe
 $shortcut.Arguments = "-m offspeak run"
@@ -108,8 +109,8 @@ Step "Configuring autostart"
 Invoke-Checked $offspeak autostart $(if ($NoAutostart) { "off" } else { "on" })
 
 if (-not $NoLaunch) {
-    Step "Starting Offspeak"
+    Step "Starting OffSpeak"
     Start-Process $appExe -ArgumentList "-m", "offspeak", "run"  # does nothing if it is already running
 }
 
-Write-Host "`nOffspeak is installed." -ForegroundColor Green
+Write-Host "`nOffSpeak is installed." -ForegroundColor Green

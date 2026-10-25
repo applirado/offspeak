@@ -286,7 +286,7 @@ def autostart_command() -> str:
 
 
 def get_autostart() -> str | None:
-    """The command Windows runs at sign-in, or None if Offspeak does not start automatically."""
+    """The command Windows runs at sign-in, or None if OffSpeak does not start automatically."""
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
             return winreg.QueryValueEx(key, RUN_VALUE)[0]
