@@ -146,16 +146,26 @@ uv run offspeak autostart on    # optional
 
 ### macOS (preview)
 
-On a Mac with Apple Silicon, run `./setup.sh` in the cloned folder. It installs uv, Python 3.12, the
-packages and the Parakeet model, the same way as on Windows. The menu bar app, global shortcuts and
-pasting are not ported yet; for now you can dictate in the terminal:
+On a Mac with Apple Silicon, open **Terminal** and paste this line:
 
 ```bash
-.venv/bin/offspeak listen       # speak, press Enter, get the text
+curl -fsSL https://raw.githubusercontent.com/applirado/offspeak/macos/install.sh | bash
 ```
 
-macOS asks once for microphone access for your terminal app. Settings, modes and models live in
-`~/Library/Application Support/Offspeak`.
+It installs uv, Python 3.12, the packages and the Parakeet model the same way as on Windows, builds
+**OffSpeak.app** in `~/Applications` (on your Mac, so Gatekeeper does not block it), starts it at login
+and opens it. Run the same line again to update.
+
+- **Hold Option+Space** in any app, talk, let go: the text is pasted where your cursor is. Esc cancels.
+- The first time, turn on OffSpeak under **System Settings > Privacy & Security > Accessibility** (it
+  needs that to see the shortcut and to paste), and allow the microphone when macOS asks.
+- The cockatoo in the menu bar shows the state (yellow ready, red recording, blue transcribing, green
+  done). Its menu switches modes and opens the settings folder.
+
+The preview has no settings window and no recording pill yet, and the shortcut is fixed. Settings, modes
+and models live in `~/Library/Application Support/Offspeak`; if something goes wrong, `launcher.log` and
+`offspeak.log` there say why. To remove OffSpeak, quit it in the menu bar, drag
+`~/Applications/OffSpeak.app` to the Bin and delete `~/Library/LaunchAgents/com.applirado.offspeak.plist`.
 
 ## Getting started
 
