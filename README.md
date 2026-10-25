@@ -41,8 +41,9 @@ Like the cockatoo in its logo, OffSpeak repeats what it hears, only more neatly.
   local machine. Audio, transcripts and history never leave your PC.
 - **Speaks your languages.** Parakeet recognises 25 European languages, including German, English,
   French and Italian, with punctuation and capitalisation.
-- **Gets your jargon right.** Add terms like *Dataverse* or *Claude Code* to the vocabulary, and
-  near-misses such as "Databurse" or "Cloud Code" are corrected automatically.
+- **Gets your jargon right.** Common technical terms such as *Azure* come out right without any
+  setup. Add your own terms like *Dataverse* or *Claude Code* to the vocabulary, and near-misses such
+  as "Databurse" or "Cloud Code" are corrected automatically.
 - **Voice commands.** Say "comma", "new line" or "quote" (in German "Komma", "neue Zeile",
   "Anführungszeichen") to insert punctuation and line breaks. OffSpeak tells the command "period"
   apart from the noun in "a long period".
