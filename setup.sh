@@ -68,6 +68,9 @@ fi
 step "Building $app"
 version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/pyproject.toml")"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+# the launcher is a script, so macOS cannot tell the architecture from it and may pick Rosetta (x86_64),
+# which cannot load the packages uv installed for Apple Silicon
+arch="$([[ "$(sysctl -n hw.optional.arm64 2>/dev/null)" == 1 ]] && echo arm64 || echo x86_64)"
 cat > "$app/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -82,6 +85,7 @@ cat > "$app/Contents/Info.plist" <<EOF
     <key>CFBundleShortVersionString</key><string>$version</string>
     <key>CFBundleVersion</key><string>$version</string>
     <key>LSMinimumSystemVersion</key><string>12.0</string>
+    <key>LSArchitecturePriority</key><array><string>$arch</string></array>
     <key>LSUIElement</key><true/>
     <key>NSMicrophoneUsageDescription</key>
     <string>OffSpeak records your voice while you hold Option+Space and turns it into text on this Mac.</string>
@@ -97,8 +101,9 @@ log="\$HOME/Library/Application Support/Offspeak/launcher.log"
 mkdir -p "\$(dirname "\$log")"
 cd "$root" || exit 1
 echo "\$(date '+%Y-%m-%d %H:%M:%S') starting" >> "\$log"
-"$bin/python" -m offspeak run >> "\$log" 2>&1
-echo "\$(date '+%Y-%m-%d %H:%M:%S') exited with \$?" >> "\$log"
+/usr/bin/arch -$arch "$bin/python" -m offspeak run >> "\$log" 2>&1
+status=\$?
+echo "\$(date '+%Y-%m-%d %H:%M:%S') exited with \$status" >> "\$log"
 EOF
 chmod +x "$app/Contents/MacOS/OffSpeak"
 "$bin/python" -c "from offspeak.icons import icon_image; icon_image('ready', 1024).save('$app/Contents/Resources/OffSpeak.icns')"
