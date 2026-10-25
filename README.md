@@ -22,7 +22,8 @@
 <p align="center">
   <img src="assets/offspeak-animation.gif" width="852" alt="Dictating into Notepad: while a hotkey is held, OffSpeak shows a red recording pill and a red tray icon; on release the text appears: 'Hi Tom,', a blank line, then 'Azure is already set up. Please don't forget to update the Claude.md file.'">
   <br>
-  <sub>🎤 Spoken: <i>"Hi Tom <b>comma</b> <b>new line</b> <b>new line</b> Azure is already set up. Please don't forget to
+  <sub>Hold <kbd>Ctrl</kbd>+<kbd>Space</kbd> in any app, talk, let go.<br>
+  🎤 Spoken: <i>"Hi Tom <b>comma</b> <b>new line</b> <b>new line</b> Azure is already set up. Please don't forget to
   update the Claude MD file."</i><br>
   <b>comma</b> and <b>new line</b> are voice commands, the voice model sets the other punctuation by itself, and the
   vocabulary turns "Claude MD" into <i>Claude.md</i>.</sub>
