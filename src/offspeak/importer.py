@@ -65,7 +65,7 @@ def import_superwhisper(config: Config, source: Path = SUPERWHISPER_DIR) -> list
     s.restore_clipboard_delay = prefs.get("restoreClipboardTimeDelay", s.restore_clipboard_delay)
     s.sound_effects = prefs.get("enableSoundEffects", s.sound_effects)
     if period := prefs.get("recordingPreservationPeriod"):
-        s.keep_recordings_days = max(1, int(period) // 86400)
+        s.keep_audio_days = max(1, int(period) // 86400)
     if prefs.get("activeMode") in config.modes:
         s.active_mode = prefs["activeMode"]
     config.save_settings()
