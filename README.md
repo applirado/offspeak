@@ -58,13 +58,14 @@ Office, ChatGPT, Claude and many other apps have a microphone button of their ow
 voice typing (Win+H). For a quick message they may be all you need. OffSpeak is for when you dictate
 a lot, and for text that should not leave your PC:
 
-| | Dictation in an app (Claude, ChatGPT, Office) | Windows voice typing (Win+H) | OffSpeak |
-|---|---|---|---|
-| Where it works | only in that app | in every app | in every app |
-| Where your voice goes | to the provider's servers | to Microsoft's servers | nowhere: recognition runs on your PC |
-| Works offline | no | no | yes |
-| Technical terms and names | varies | rarely right | your own vocabulary, which also fixes near-misses |
-| English terms in German text | varies | no: one language at a time | yes: the language is detected for you, and the vocabulary keeps your terms intact |
+| | Dictation in an app (Claude, ChatGPT, Office) | Windows voice typing (Win+H) | Dictation apps with a subscription | OffSpeak |
+|---|---|---|---|---|
+| Where it works | only in that app | in every app | in every app | in every app |
+| Where your voice goes | to the provider's servers | to Microsoft's servers | mostly to the provider's servers | nowhere: recognition runs on your PC |
+| Works offline | no | no | some, with a local model | yes |
+| Technical terms and names | varies | rarely right | usually a personal dictionary | your own vocabulary, which also fixes near-misses |
+| English terms in German text | varies | no: one language at a time | varies | yes: the language is detected for you, and the vocabulary keeps your terms intact |
+| Cost | part of the app | free | a monthly or yearly subscription | free and open source (MIT) |
 
 That makes OffSpeak a good fit for confidential mail, customer data and workplaces where cloud speech
 recognition is not allowed.
