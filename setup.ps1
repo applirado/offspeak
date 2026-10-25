@@ -28,8 +28,15 @@ $defaultVoiceModel = "parakeet-tdt-0.6b-v3"  # matches Mode.voice_model in confi
 function Step($message) { Write-Host "`n==> $message" -ForegroundColor Cyan }
 
 function Invoke-Checked {
-    & $args[0] @($args | Select-Object -Skip 1)
+    # uv and the downloads report on stderr; as plain lines they also reach the installer's log
+    $ErrorActionPreference = "Continue"
+    & $args[0] @($args | Select-Object -Skip 1) 2>&1 | ForEach-Object { "$_" }
     if ($LASTEXITCODE -ne 0) { throw "'$($args -join ' ')' failed with exit code $LASTEXITCODE" }
+}
+
+if ($Installer) {
+    # the installer's console window closes at the end, so keep what happened for when it fails
+    Start-Transcript -Path (Join-Path $root "setup.log") -Force | Out-Null
 }
 
 # -- uv (installs and manages Python itself) ---------------------------------

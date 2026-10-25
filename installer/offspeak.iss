@@ -58,6 +58,7 @@ Filename: "{app}\.venv\OffSpeak\OffSpeak.exe"; Parameters: "-m offspeak run"; De
 Type: filesandordirs; Name: "{app}\.venv"
 Type: filesandordirs; Name: "{app}\python"
 Type: filesandordirs; Name: "{app}\src"
+Type: files; Name: "{app}\setup.log"
 Type: dirifempty; Name: "{app}"
 
 [Code]
@@ -94,7 +95,8 @@ begin
          '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\setup.ps1') + '" -Installer',
          ExpandConstant('{app}'), SW_SHOWNORMAL, ewWaitUntilTerminated, Code) or (Code <> 0) then
       MsgBox('OffSpeak could not download everything it needs (error ' + IntToStr(Code) + ').' + #13#10 + #13#10 +
-        'Check your internet connection and run the setup again; it continues where it stopped.',
+        'Check your internet connection and run the setup again; it continues where it stopped.' + #13#10 + #13#10 +
+        'Details: ' + ExpandConstant('{app}\setup.log'),
         mbError, MB_OK);
   end;
 end;
