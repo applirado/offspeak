@@ -4,7 +4,7 @@ name: website
 on:
   push:
     branches: [main]
-    paths: ["website/**", ".github/workflows/pages.yml"]
+    paths: ["website/**", "assets/social-preview.png", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Add the link preview image  # og:image in index.html
+        run: cp assets/social-preview.png website/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website
