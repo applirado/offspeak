@@ -53,6 +53,27 @@ jobs:
           name: OffSpeak-Setup
           path: dist/*.exe
 
+  # opens a pull request on microsoft/winget-pkgs for the new version; needs the WINGET_TOKEN secret
+  # (a classic token with public_repo) and the package already in winget-pkgs
+  winget:
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Submit to winget
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          if (-not $env:WINGET_TOKEN) { "no WINGET_TOKEN secret, skipped"; exit 0 }
+          $v = "${{ github.event.release.tag_name }}".TrimStart("v")
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update Applirado.OffSpeak --version $v `
+            --urls "https://github.com/applirado/offspeak/releases/download/v$v/OffSpeak-Setup-$v.exe" `
+            --release-notes-url "https://github.com/applirado/offspeak/releases/tag/v$v" `
+            --release-date (Get-Date -Format yyyy-MM-dd) --token $env:WINGET_TOKEN --submit --no-open
+          if ($LASTEXITCODE -ne 0) { throw "wingetcreate failed" }
+
   # install on a clean Windows, dictate a spoken sentence with the installed app, uninstall
   test:
     if: github.event_name != 'release'
