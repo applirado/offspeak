@@ -56,6 +56,8 @@ Like the cockatoo in its logo, OffSpeak repeats what it hears, only more neatly.
   speed. A long email or a detailed prompt takes seconds instead of minutes.
 - **Fast on an ordinary laptop CPU.** With NVIDIA Parakeet, a typical sentence is transcribed in
   0.3 to 0.5 seconds. No GPU is needed.
+- **No account, nothing to sign in to.** Install it and dictate. There is no sign-up, no login, no
+  licence key and no email address to give.
 - **Private by design.** A built-in network guard refuses every connection that does not stay on the
   local machine. Audio, transcripts and history never leave your PC.
 - **Speaks your languages.** Parakeet recognises 25 European languages, including German, English,
@@ -83,6 +85,7 @@ a lot, and for text that should not leave your PC:
 | Where it works | in every app | only in that app | in every app | in every app |
 | Where your voice goes | nowhere: recognition runs on your PC | to the provider's servers | to Microsoft's servers | mostly to the provider's servers |
 | Works offline | yes | no | no | some, with a local model |
+| Account needed | no | yes, with that provider | no | yes |
 | Technical terms and names | your own vocabulary, which also fixes near-misses | varies | often misheard in our tests | usually a personal dictionary |
 | English terms in German text | yes: the language is detected for you, and the vocabulary keeps your terms intact | varies | no: one language at a time | varies |
 | Cost | free and open source (MIT) | part of the app | free | a monthly or yearly subscription |
