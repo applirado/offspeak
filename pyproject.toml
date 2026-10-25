@@ -1,6 +1,6 @@
 [project]
 name = "offspeak"
-version = "0.2.0"
+version = "0.3.0"
 description = "Offline voice dictation for Windows: local speech-to-text (Parakeet or whisper.cpp) with optional llama.cpp clean-up, no cloud."
 requires-python = ">=3.12,<3.13"
 license = "MIT"
