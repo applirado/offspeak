@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Write faster than you ever have. OffSpeak is voice dictation for Windows that runs entirely on your own PC: hold a hotkey, talk, let go, and the text appears where your cursor is, at about 120 words a minute.">
+<meta name="description" content="OffSpeak is voice dictation for every app on Windows that runs entirely on your own PC: hold a hotkey, talk, let go, and the text appears where your cursor is, at about 120 words a minute. Free and open source.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="OffSpeak">
 <meta property="og:title" content="OffSpeak: offline voice dictation for Windows">
@@ -229,6 +229,18 @@ section { padding-block: 5rem; }
 @media (min-width: 48rem) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .feature { background: var(--surface); padding: 2rem; display: grid; gap: .8rem; align-content: start; min-width: 0; }
 .feature p { color: var(--muted); max-width: 32rem; }
+
+/* the table scrolls inside its frame on narrow screens, so the page itself never scrolls sideways */
+.compare-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 1.25rem; background: var(--surface); }
+.compare { width: 100%; min-width: 46rem; border-collapse: collapse; table-layout: fixed; font-size: var(--step--1); }
+.compare col:first-child { width: 10rem; }
+.compare th, .compare td { text-align: left; vertical-align: top; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); }
+.compare tr:last-child th, .compare tr:last-child td { border-bottom: 0; }
+.compare thead th { font-family: var(--display); font-weight: 600; color: var(--ink); }
+.compare tbody th { font-weight: 600; color: var(--ink); }
+.compare td { color: var(--muted); }
+.compare .us { background: var(--amber-soft); color: var(--ink); }
+.compare-note { margin-top: 1.25rem; color: var(--muted); max-width: 40rem; }
 .example {
   margin-top: .4rem; padding: .85rem 1rem; border-radius: .75rem;
   background: var(--paper); border: 1px solid var(--line);
@@ -320,6 +332,7 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
     </a>
     <nav aria-label="Sections">
       <a href="#features">Features</a>
+      <a href="#compare">Compared</a>
       <a href="#privacy">Privacy</a>
       <a href="#install">Install</a>
       <a href="https://github.com/applirado/offspeak">GitHub</a>
@@ -333,7 +346,7 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
       <div>
         <p class="eyebrow">Voice dictation for Windows</p>
         <h1 style="margin-top:.9rem">Dictate fast.<br><em>Stay local.</em></h1>
-        <p class="lede"><strong>Write faster than you ever have.</strong> Hold a hotkey, talk, let go, and the text appears wherever your cursor is: in an AI chat, your editor, mail or a browser. Long prompts take seconds instead of minutes. Speech recognition runs on your own PC, with no account, no cloud and no upload.</p>
+        <p class="lede"><strong>One hotkey for every app.</strong> Hold it, talk, let go, and the text appears wherever your cursor is: in Outlook, Teams, Word, your browser, your editor or your AI assistant. A long e-mail takes seconds instead of minutes. Speech recognition runs on your own PC, with no account, no cloud and no upload.</p>
         <div class="cta">
           <a class="btn btn-primary" href="#install">Install for Windows</a>
           <a class="btn" href="https://github.com/applirado/offspeak#readme">Read the docs</a>
@@ -343,9 +356,9 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
 
       <div class="stage" aria-label="Try it: a dictation demo">
         <div class="window">
-          <div class="win-bar"><span><b>New chat</b> with your AI assistant</span><span class="win-ctl" aria-hidden="true">– ▢ ✕</span></div>
+          <div class="win-bar"><span><b>New message</b> · Re: Azure migration</span><span class="win-ctl" aria-hidden="true">– ▢ ✕</span></div>
           <div class="doc" id="doc" aria-live="polite">
-            <p class="to">Assistant: How can I help you today?</p>
+            <p class="to">To: Tom</p>
             <p id="cursor-line"><span class="caret" aria-hidden="true"></span></p>
           </div>
         </div>
@@ -401,6 +414,33 @@ footer .quote { font-family: var(--display); font-weight: 600; font-size: var(--
           <p>A mode bundles language, shortcut and an optional local language model with a prompt, for example “turn this into a short, friendly e-mail”. It can switch on by itself when Outlook is in front.</p>
         </article>
       </div>
+    </div>
+  </section>
+
+  <section id="compare">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow">Compared</p>
+        <h2>Why not the dictation that is already built in?</h2>
+        <p>Office, ChatGPT, Claude and many other apps have a microphone button of their own, and Windows has voice typing. For a quick message they may be all you need. OffSpeak is for when you dictate a lot, and for text that should not leave your PC.</p>
+      </div>
+      <div class="compare-scroll" tabindex="0" aria-label="Comparison table, scrolls sideways on small screens">
+        <table class="compare">
+          <colgroup><col><col><col><col><col></colgroup>
+          <thead>
+            <tr><td></td><th scope="col" class="us">OffSpeak</th><th scope="col">Dictation in an app</th><th scope="col">Windows voice typing</th><th scope="col">Dictation apps with a subscription</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Where it works</th><td class="us">in every app</td><td>only in that app</td><td>in every app</td><td>in every app</td></tr>
+            <tr><th scope="row">Where your voice goes</th><td class="us">nowhere: recognition runs on your PC</td><td>to the provider's servers</td><td>to Microsoft's servers</td><td>mostly to the provider's servers</td></tr>
+            <tr><th scope="row">Works offline</th><td class="us">yes</td><td>no</td><td>no</td><td>some, with a local model</td></tr>
+            <tr><th scope="row">Technical terms and names</th><td class="us">common terms out of the box, plus your own vocabulary that also fixes near-misses</td><td>varies</td><td>rarely right</td><td>usually a personal dictionary</td></tr>
+            <tr><th scope="row">English terms in German text</th><td class="us">yes: the language is detected for you</td><td>varies</td><td>no: one language at a time</td><td>varies</td></tr>
+            <tr><th scope="row">Cost</th><td class="us">free and open source (MIT)</td><td>part of the app</td><td>free</td><td>a monthly or yearly subscription</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="compare-note">That makes OffSpeak a good fit for confidential mail, customer data and workplaces where cloud speech recognition is not allowed.</p>
     </div>
   </section>
 
@@ -498,14 +538,12 @@ cd offspeak
 (() => {
   // Recorded examples: what the recogniser heard, and what OffSpeak inserts after its rules.
   const samples = [
-    { heard: "Summarize this thread in three bullet points comma keep the action items period",
-      text: "Summarize this thread in three bullet points, keep the action items.", ms: 290 },
-    { heard: "Write a test for the Ulama client that mocks the Databurse API.",
-      text: "Write a test for the Ollama client that mocks the Dataverse API.", ms: 310 },
-    { heard: "Explain the error new line then suggest a fix open parenthesis keep it short close parenthesis period",
-      text: "Explain the error\nThen suggest a fix (keep it short).", ms: 340 },
-    { heard: "Fasse den Artikel kurz zusammen Komma maximal fünf Sätze Punkt",
-      text: "Fasse den Artikel kurz zusammen, maximal fünf Sätze.", ms: 300 },
+    { heard: "Hi Tom comma", text: "Hi Tom,", ms: 240 },
+    { heard: "The Azure migration is done period I tested the Ulama client against the Databurse API period",
+      text: "The Azure migration is done. I tested the Ollama client against the Dataverse API.", ms: 330 },
+    { heard: "Can we go through the results on Thursday question mark Ten o'clock works for me period",
+      text: "Can we go through the results on Thursday? Ten o'clock works for me.", ms: 310 },
+    { heard: "Best regards comma new line Sam", text: "Best regards,\nSam", ms: 260 },
   ];
   const MIN_MS = 400;  // like the app: shorter recordings are treated as no speech
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -547,7 +585,7 @@ cd offspeak
     heard.innerHTML = "";
     heard.append("heard: ", Object.assign(document.createElement("b"), { textContent: sample.heard }));
     setTimeout(() => {
-      if (doc.querySelectorAll("p.dictated").length >= 3) doc.querySelectorAll("p.dictated").forEach(p => p.remove());
+      if (doc.querySelectorAll("p.dictated").length >= samples.length) doc.querySelectorAll("p.dictated").forEach(p => p.remove());
       const p = document.createElement("p");
       p.className = "dictated fresh";
       p.textContent = sample.text;
