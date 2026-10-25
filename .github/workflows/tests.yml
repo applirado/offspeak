@@ -49,16 +49,24 @@ jobs:
       - name: Check OffSpeak.app
         run: |
           app="$HOME/Applications/OffSpeak.app"
-          plutil -lint "$app/Contents/Info.plist"
-          test -x "$app/Contents/MacOS/OffSpeak"
-          test -s "$app/Contents/Resources/OffSpeak.icns"
-          test -x "$app/Contents/Resources/offspeak/.venv/bin/python"
+          test "$(plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist")" = com.applirado.offspeak
+          test "$(plutil -extract LSUIElement raw "$app/Contents/Info.plist")" = true
+          file "$app/Contents/MacOS/applet" | grep -q Mach-O  # a real program, so macOS asks in OffSpeak's name
+          codesign --verify "$app"
+          test -s "$app/Contents/Resources/applet.icns"
+          test -x ~/Library/Application\ Support/Offspeak/app/.venv/bin/python
           plutil -p ~/Library/LaunchAgents/com.applirado.offspeak.plist | grep -q "OffSpeak.app"
-      - name: The menu bar app starts and keeps running
+      - name: The menu bar app starts as a child of OffSpeak.app and keeps running
         run: |
           # install.sh opened the app; without Accessibility it waits for permission, but must not crash
           sleep 20
           data=~/Library/Application\ Support/Offspeak
-          if ! pgrep -f "offspeak run" || grep -q Traceback "$data/launcher.log" "$data/offspeak.log"; then
+          pid="$(pgrep -f "offspeak run" | head -1)"
+          if [ -z "$pid" ] || grep -q Traceback "$data/launcher.log" "$data/offspeak.log"; then
             tail -n 60 "$data/launcher.log" "$data/offspeak.log"; exit 1
           fi
+          while [ "$pid" -gt 1 ]; do  # walk up the parents to OffSpeak.app's program
+            ps -o comm= -p "$pid" | grep -q "OffSpeak.app/Contents/MacOS/applet" && exit 0
+            pid="$(ps -o ppid= -p "$pid" | tr -d ' ')"
+          done
+          echo "Python does not run under OffSpeak.app"; exit 1

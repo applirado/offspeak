@@ -152,9 +152,9 @@ On a Mac with Apple Silicon, open **Terminal** and paste this line:
 curl -fsSL https://raw.githubusercontent.com/applirado/offspeak/macos/install.sh | bash
 ```
 
-It installs uv, Python 3.12, the packages and the Parakeet model the same way as on Windows, builds
-**OffSpeak.app** in `~/Applications` (on your Mac, so Gatekeeper does not block it), starts it at login
-and opens it. Run the same line again to update.
+It installs uv, Python 3.12, the packages and the Parakeet model the same way as on Windows, builds a
+small **OffSpeak.app** in `~/Applications` (on your Mac, so Gatekeeper does not block it), starts it at
+login and opens it. Run the same line again to update.
 
 - **Hold Option+Space** in any app, talk, let go: the text is pasted where your cursor is. Esc cancels.
 - The first time, turn on OffSpeak under **System Settings > Privacy & Security > Accessibility** (it
@@ -162,10 +162,11 @@ and opens it. Run the same line again to update.
 - The cockatoo in the menu bar shows the state (yellow ready, red recording, blue transcribing, green
   done). Its menu switches modes and opens the settings folder.
 
-The preview has no settings window and no recording pill yet, and the shortcut is fixed. Settings, modes
-and models live in `~/Library/Application Support/Offspeak`; if something goes wrong, `launcher.log` and
-`offspeak.log` there say why. To remove OffSpeak, quit it in the menu bar, drag
-`~/Applications/OffSpeak.app` to the Bin and delete `~/Library/LaunchAgents/com.applirado.offspeak.plist`.
+The preview has no settings window and no recording pill yet, and the shortcut is fixed. The code,
+settings, modes and models live in `~/Library/Application Support/Offspeak`; if something goes wrong,
+`launcher.log` and `offspeak.log` there say why. To remove OffSpeak, quit it in the menu bar, drag
+`~/Applications/OffSpeak.app` to the Bin, delete `~/Library/LaunchAgents/com.applirado.offspeak.plist`,
+and delete the folder above if you no longer need your settings and models.
 
 ## Getting started
 

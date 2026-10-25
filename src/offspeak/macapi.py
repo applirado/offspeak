@@ -104,7 +104,7 @@ def acquire_single_instance(name: str) -> bool:
 
 
 def app_bundle() -> Path:
-    """OffSpeak.app; its launcher sets OFFSPEAK_APP, setup.sh builds it in ~/Applications by default."""
+    """OffSpeak.app, which setup.sh builds in ~/Applications; OFFSPEAK_APP overrides it."""
     return Path(os.environ.get("OFFSPEAK_APP") or Path.home() / "Applications" / "OffSpeak.app")
 
 

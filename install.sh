@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Installs or updates the OffSpeak preview for macOS:
 #     curl -fsSL https://raw.githubusercontent.com/applirado/offspeak/macos/install.sh | bash
-# Downloads the source code into ~/Applications/OffSpeak.app/Contents/Resources/offspeak and runs its setup.sh,
-# which installs uv, Python, the packages and the voice model for the current user. No admin rights needed.
+# Downloads the source code into ~/Library/Application Support/Offspeak/app and runs its setup.sh, which installs
+# uv, Python, the packages and the voice model for the current user and builds ~/Applications/OffSpeak.app.
+# No admin rights needed.
 set -euo pipefail
 
 branch="${OFFSPEAK_BRANCH:-macos}"  # the macOS preview lives on this branch until it is released
-app="$HOME/Applications/OffSpeak.app"
-code="$app/Contents/Resources/offspeak"
+code="$HOME/Library/Application Support/Offspeak/app"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 

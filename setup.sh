@@ -58,56 +58,34 @@ sys.exit(0 if '$default_voice_model' in models.voice_models(Config().settings.mo
 fi
 
 # -- OffSpeak.app ------------------------------------------------------------------
-# A small app that starts OffSpeak from this folder. It is built here, not downloaded, so Gatekeeper does
-# not block it, and macOS asks for microphone and Accessibility permission in OffSpeak's name.
-if [[ "$root" == */OffSpeak.app/Contents/Resources/* ]]; then
-    app="${root%%/OffSpeak.app/*}/OffSpeak.app"  # install.sh keeps the code inside the app
-else
-    app="$HOME/Applications/OffSpeak.app"
+# macOS grants the microphone and Accessibility to the app that started a process. With a script as the
+# app's program, it cannot tell which app that is and asks for Python instead. So OffSpeak.app is a tiny
+# AppleScript program (osacompile comes with macOS) that runs launch-macos.sh, and Python is its child.
+# It is built here, not downloaded, so Gatekeeper does not block it. It only changes when this folder
+# moves, because a changed app loses the permissions the user gave it.
+app="$HOME/Applications/OffSpeak.app"
+plist="$app/Contents/Info.plist"
+chmod +x "$root/launch-macos.sh"
+if [[ -d "$app/Contents/Resources/offspeak" ]]; then
+    rm -rf "$app"  # built by the first preview, with the code inside the app
 fi
-step "Building $app"
-version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/pyproject.toml")"
-mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
-# the launcher is a script, so macOS cannot tell the architecture from it and may pick Rosetta (x86_64),
-# which cannot load the packages uv installed for Apple Silicon
-arch="$([[ "$(sysctl -n hw.optional.arm64 2>/dev/null)" == 1 ]] && echo arm64 || echo x86_64)"
-cat > "$app/Contents/Info.plist" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleName</key><string>OffSpeak</string>
-    <key>CFBundleDisplayName</key><string>OffSpeak</string>
-    <key>CFBundleIdentifier</key><string>com.applirado.offspeak</string>
-    <key>CFBundleExecutable</key><string>OffSpeak</string>
-    <key>CFBundleIconFile</key><string>OffSpeak</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>$version</string>
-    <key>CFBundleVersion</key><string>$version</string>
-    <key>LSMinimumSystemVersion</key><string>12.0</string>
-    <key>LSArchitecturePriority</key><array><string>$arch</string></array>
-    <key>LSUIElement</key><true/>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>OffSpeak records your voice while you hold Option+Space and turns it into text on this Mac.</string>
-</dict>
-</plist>
-EOF
-cat > "$app/Contents/MacOS/OffSpeak" <<EOF
-#!/bin/bash
-# Starts OffSpeak from $root. Python runs as a child process, so macOS keeps treating
-# OffSpeak.app as the app that asks for the microphone and for Accessibility.
-export OFFSPEAK_APP="$app"
-log="\$HOME/Library/Application Support/Offspeak/launcher.log"
-mkdir -p "\$(dirname "\$log")"
-cd "$root" || exit 1
-echo "\$(date '+%Y-%m-%d %H:%M:%S') starting" >> "\$log"
-/usr/bin/arch -$arch "$bin/python" -m offspeak run >> "\$log" 2>&1
-status=\$?
-echo "\$(date '+%Y-%m-%d %H:%M:%S') exited with \$status" >> "\$log"
-EOF
-chmod +x "$app/Contents/MacOS/OffSpeak"
-"$bin/python" -c "from offspeak.icons import icon_image; icon_image('ready', 1024).save('$app/Contents/Resources/OffSpeak.icns')"
-touch "$app"  # so Finder and the Dock pick up the new icon
+if [[ "$(cat "$app/Contents/Resources/offspeak-root" 2>/dev/null)" != "$root" ]]; then
+    step "Building $app"
+    rm -rf "$app"
+    mkdir -p "$(dirname "$app")"
+    osacompile -o "$app" -e "do shell script quoted form of \"$root/launch-macos.sh\""
+    plutil -replace CFBundleIdentifier -string com.applirado.offspeak "$plist"
+    plutil -replace CFBundleName -string OffSpeak "$plist"
+    plutil -replace LSUIElement -bool true "$plist"
+    plutil -replace NSMicrophoneUsageDescription -string \
+        "OffSpeak records your voice while you hold Option+Space and turns it into text on this Mac." "$plist"
+    plutil -remove CFBundleIconName "$plist" 2>/dev/null || true  # use applet.icns, not the asset catalog
+    rm -f "$app/Contents/Resources/Assets.car"
+    "$bin/python" -c "from offspeak.icons import icon_image; icon_image('ready', 1024).save('$app/Contents/Resources/applet.icns')"
+    echo "$root" > "$app/Contents/Resources/offspeak-root"
+    codesign --force --sign - "$app"  # ad hoc, on this Mac; editing the app broke osacompile's signature
+    touch "$app"  # so Finder and the Dock pick up the new icon
+fi
 
 step "Configuring autostart"
 OFFSPEAK_APP="$app" "$bin/offspeak" autostart "$autostart"
@@ -119,8 +97,8 @@ Hold Option+Space in any app, talk, let go. The first time, macOS asks for:
   - Accessibility: open System Settings > Privacy & Security > Accessibility and turn on OffSpeak,
     so it can see the shortcut and paste the text
   - the microphone, when you dictate for the first time
-OffSpeak lives in the menu bar (the cockatoo). To remove it, quit it there and drag
-$app to the Bin.
+OffSpeak lives in the menu bar (the cockatoo). To remove it, quit it there, drag $app
+to the Bin and delete ~/Library/LaunchAgents/com.applirado.offspeak.plist.
 EOF
 
 if [[ $launch == 1 ]]; then
