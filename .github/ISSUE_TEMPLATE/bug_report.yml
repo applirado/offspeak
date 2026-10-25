@@ -13,27 +13,35 @@ body:
     id: version
     attributes:
       label: OffSpeak version
-      description: Shown next to OffSpeak in Windows Settings > Apps > Installed apps.
-      placeholder: "0.2.0"
+      description: |
+        Windows: shown next to OffSpeak in Settings > Apps > Installed apps.
+        Mac: run `sed -n 's/^version = //p' ~/Library/Application\ Support/Offspeak/app/pyproject.toml` in Terminal.
+      placeholder: "0.4.0"
     validations:
       required: true
   - type: dropdown
-    id: windows
+    id: system
     attributes:
-      label: Windows version
-      options: [Windows 11, Windows 10]
+      label: System
+      options: [Windows 11, Windows 10, macOS (Apple Silicon)]
     validations:
       required: true
   - type: dropdown
     id: install
     attributes:
       label: Installed with
-      options: [OffSpeak-Setup.exe, setup.cmd, uv by hand]
+      options:
+        - the PowerShell line (install.ps1)
+        - the Terminal line on a Mac (install.sh)
+        - setup.cmd or setup.sh in a clone
+        - uv by hand
+        - OffSpeak-Setup.exe (0.2.0 or 0.3.0)
   - type: textarea
     id: log
     attributes:
       label: Log
       description: |
-        The end of `%LOCALAPPDATA%\Offspeak\offspeak.log`, if it shows an error.
+        The end of `offspeak.log` if it shows an error: in `%LOCALAPPDATA%\Offspeak` on Windows, in
+        `~/Library/Application Support/Offspeak` on a Mac (there `launcher.log` can help too).
         Please check it for anything private before you post it.
       render: text
