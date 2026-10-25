@@ -4,7 +4,7 @@
 
 <h1 align="center">OffSpeak</h1>
 
-<p align="center"><b>Dictate fast, stay local.</b> Offline voice dictation for Windows.</p>
+<p align="center"><b>Fast offline voice dictation that even understands your technical terms.</b></p>
 
 <p align="center">
   <a href="https://github.com/applirado/offspeak/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/applirado/offspeak?label=download"></a>
